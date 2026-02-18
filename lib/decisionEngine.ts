@@ -93,12 +93,12 @@ export function makeDecision(input: DecisionInput): DecisionResult {
       {
         type: 'delivery',
         label: '배민에서 보기',
-        url: `https://www.google.com/search?q=${encodeURIComponent('배민 ' + selectedMenu.name)}`,
+        url: `https://www.google.com/search?q=site:baemin.com+${encodeURIComponent(selectedMenu.name)}`,
       },
       {
         type: 'delivery',
         label: '쿠팡이츠에서 보기',
-        url: `https://www.google.com/search?q=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name)}`,
+        url: `https://www.google.com/search?q=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name + ' 주문')}`,
       },
       {
         type: 'delivery',
