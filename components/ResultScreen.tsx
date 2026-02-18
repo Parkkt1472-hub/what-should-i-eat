@@ -5,6 +5,9 @@ import { incrementUsage } from '@/lib/usageLimit';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+// 쿠팡 파트너스 재료 구매 링크
+const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
+
 interface ResultScreenProps {
   data: any;
   onBackToHome: () => void;
@@ -111,6 +114,24 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Coupang Partners Button (재료가 있을 때만 표시) */}
+            {result.ingredients && result.ingredients.length > 0 && (
+              <a
+                href={COUPANG_INGREDIENT_BUY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group w-full flex items-center justify-between bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-2xl">🛒</span>
+                  <span>쿠팡에서 재료 구매하기</span>
+                </span>
+                <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
             )}
 
             {/* Action buttons */}
