@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
+import HistoryModal from './HistoryModal';
 import { PreferenceVector } from '@/lib/decisionEngine';
+import { loadPreferences, hasStoredPreferences } from '@/lib/preferenceStorage';
+import { getHistoryCount } from '@/lib/historyStorage';
 
 interface HomeScreenProps {
   onStartDecision: () => void;
@@ -11,14 +14,40 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onStartDecision, onStartPersonalized }: HomeScreenProps) {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [hasPreferences, setHasPreferences] = useState(false);
+  const [historyCount, setHistoryCount] = useState(0);
+
+  useEffect(() => {
+    // 저장된 선호도 확인
+    setHasPreferences(hasStoredPreferences());
+    // 히스토리 개수 확인
+    setHistoryCount(getHistoryCount());
+  }, []);
+
+  // 모달이 닫힐 때 히스토리 개수 업데이트
+  useEffect(() => {
+    if (!showHistoryModal) {
+      setHistoryCount(getHistoryCount());
+    }
+  }, [showHistoryModal]);
 
   const handleCustomRecommendation = () => {
+    // 저장된 선호도가 있으면 바로 추천, 없으면 설문조사
+    if (hasPreferences) {
+      const stored = loadPreferences();
+      if (stored) {
+        onStartPersonalized(stored);
+        return;
+      }
+    }
     setShowSurveyModal(true);
   };
 
   const handleSurveySubmit = (preferences: PreferenceVector) => {
     setShowSurveyModal(false);
+    setHasPreferences(true); // 선호도가 저장되었음을 표시
     onStartPersonalized(preferences);
   };
 
@@ -81,11 +110,18 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           </p>
         </div>
 
-        {/* Legal disclaimer link */}
-        <div className="pt-4">
+        {/* Action Links */}
+        <div className="pt-4 flex items-center gap-4 justify-center">
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1"
+          >
+            📋 추천 기록 {historyCount > 0 && `(${historyCount})`}
+          </button>
+          <span className="text-gray-300">|</span>
           <button
             onClick={() => setShowDisclaimerModal(true)}
-            className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
+            className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
           >
             법적 고지사항
           </button>
@@ -97,6 +133,12 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         isOpen={showSurveyModal}
         onClose={() => setShowSurveyModal(false)}
         onSubmit={handleSurveySubmit}
+      />
+
+      {/* History Modal */}
+      <HistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
       />
 
       {/* Legal Disclaimer Modal */}

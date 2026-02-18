@@ -2,6 +2,7 @@
 
 import { makeDecision } from '@/lib/decisionEngine';
 import { incrementUsage } from '@/lib/usageLimit';
+import { addToHistory } from '@/lib/historyStorage';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -24,6 +25,15 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     const decision = makeDecision(data, { mode });
     setResult(decision);
     setPreviousMenu(decision.menu);
+
+    // 히스토리에 저장
+    addToHistory({
+      menuName: decision.menu,
+      mode: mode,
+      reason: decision.reason,
+      who: data.who,
+      how: data.how,
+    });
   }, [data]);
 
   const handleGetAnotherRecommendation = () => {
@@ -40,6 +50,15 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     setResult(newDecision);
     setPreviousMenu(newDecision.menu);
     setImageError(false);
+
+    // 히스토리에 저장
+    addToHistory({
+      menuName: newDecision.menu,
+      mode: mode,
+      reason: newDecision.reason,
+      who: data.who,
+      how: data.how,
+    });
   };
 
   if (!result) {

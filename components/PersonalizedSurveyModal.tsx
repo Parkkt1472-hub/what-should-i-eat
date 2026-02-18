@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PreferenceVector } from '@/lib/decisionEngine';
+import { loadPreferences, savePreferences, clearPreferences } from '@/lib/preferenceStorage';
 
 interface PersonalizedSurveyModalProps {
   isOpen: boolean;
@@ -9,22 +10,42 @@ interface PersonalizedSurveyModalProps {
   onSubmit: (preferences: PreferenceVector) => void;
 }
 
+const DEFAULT_PREFERENCES: PreferenceVector = {
+  spicy: 1,
+  soup: 1,
+  preferRice: true,
+  preferNoodle: true,
+  meat: 2,
+  seafood: 1,
+  veg: 1,
+  time: 1,
+  budget: 1,
+};
+
 export default function PersonalizedSurveyModal({ isOpen, onClose, onSubmit }: PersonalizedSurveyModalProps) {
-  const [preferences, setPreferences] = useState<PreferenceVector>({
-    spicy: 1,
-    soup: 1,
-    preferRice: true,
-    preferNoodle: true,
-    meat: 2,
-    seafood: 1,
-    veg: 1,
-    time: 1,
-    budget: 1,
-  });
+  const [preferences, setPreferences] = useState<PreferenceVector>(DEFAULT_PREFERENCES);
+
+  // 모달이 열릴 때 저장된 선호도 로드
+  useEffect(() => {
+    if (isOpen) {
+      const stored = loadPreferences();
+      if (stored) {
+        setPreferences(stored);
+      }
+    }
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    savePreferences(preferences); // 선호도 저장
     onSubmit(preferences);
+  };
+
+  const handleReset = () => {
+    if (confirm('저장된 선호도를 초기화하시겠습니까?')) {
+      clearPreferences();
+      setPreferences(DEFAULT_PREFERENCES);
+    }
   };
 
   if (!isOpen) return null;
@@ -254,19 +275,30 @@ export default function PersonalizedSurveyModal({ isOpen, onClose, onSubmit }: P
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+            <div className="space-y-3 pt-4">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:shadow-lg transition-all"
+                >
+                  맞춤 추천 받기 🎯
+                </button>
+              </div>
+              
+              {/* Reset Button */}
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                onClick={handleReset}
+                className="w-full py-2 px-4 rounded-xl border border-gray-300 text-gray-500 text-sm hover:bg-gray-50 transition-all"
               >
-                취소
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:shadow-lg transition-all"
-              >
-                맞춤 추천 받기 🎯
+                🔄 선호도 초기화
               </button>
             </div>
           </form>
