@@ -107,14 +107,14 @@ export function makeDecision(input: DecisionInput): DecisionResult {
         type: 'delivery',
         label: '🛵 배민에서 보기',
         url: `https://www.baemin.com/`,
-        deepLink: `baemin://search?query=${encodedMenu}`,
+        deepLink: `baemin://`,
         fallbackUrl: `https://www.baemin.com/`,
       },
       {
         type: 'delivery',
         label: '🛵 쿠팡이츠에서 보기',
         url: `https://www.coupangeats.com/`,
-        deepLink: `coupangeats://search?query=${encodedMenu}`,
+        deepLink: `coupangeats://`,
         fallbackUrl: `https://www.coupangeats.com/`,
       },
       {

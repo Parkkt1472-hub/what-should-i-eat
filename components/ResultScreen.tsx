@@ -127,40 +127,20 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 const icons = ['📖', '🎥', '🛒', '🛵', '🗺️'];
                 
                 const handleClick = (e: React.MouseEvent) => {
+                  // For delivery apps with deep links
                   if (action.deepLink && action.fallbackUrl) {
                     e.preventDefault();
                     
-                    // Create invisible iframe to try deep link
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = action.deepLink;
-                    document.body.appendChild(iframe);
+                    // Try deep link (will open app if installed)
+                    window.location.href = action.deepLink;
                     
-                    // Track if app opened
-                    let appOpened = false;
-                    const startTime = Date.now();
-                    
-                    // Check if user left the page (app opened)
-                    const handleVisibilityChange = () => {
-                      if (document.hidden) {
-                        appOpened = true;
-                      }
-                    };
-                    
-                    document.addEventListener('visibilitychange', handleVisibilityChange);
-                    
-                    // Fallback to web URL if app didn't open
+                    // Fallback to website after short delay
                     setTimeout(() => {
-                      document.removeEventListener('visibilitychange', handleVisibilityChange);
-                      document.body.removeChild(iframe);
-                      
-                      const elapsedTime = Date.now() - startTime;
-                      
-                      // If app didn't open and not much time passed, open fallback
-                      if (!appOpened && elapsedTime < 2000) {
-                        window.open(action.fallbackUrl, '_blank');
+                      // Only open fallback if still on same page (app didn't open)
+                      if (!document.hidden) {
+                        window.location.href = action.fallbackUrl;
                       }
-                    }, 1500);
+                    }, 1000);
                   }
                 };
                 
