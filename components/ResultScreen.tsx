@@ -19,7 +19,9 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [previousMenu, setPreviousMenu] = useState<string>('');
 
   useEffect(() => {
-    const decision = makeDecision(data);
+    // Determine mode based on whether preferences are provided
+    const mode = data.preferences ? 'personalized' : 'random';
+    const decision = makeDecision(data, { mode });
     setResult(decision);
     setPreviousMenu(decision.menu);
   }, [data]);
@@ -29,10 +31,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     incrementUsage();
     
     // Generate new decision with excluded previous menu
+    const mode = data.preferences ? 'personalized' : 'random';
     const newDecision = makeDecision({
       ...data,
       excludeMenu: previousMenu,
-    });
+    }, { mode });
     
     setResult(newDecision);
     setPreviousMenu(newDecision.menu);

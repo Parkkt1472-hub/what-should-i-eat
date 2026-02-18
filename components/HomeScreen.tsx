@@ -1,17 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import PersonalizedSurveyModal from './PersonalizedSurveyModal';
+import { PreferenceVector } from '@/lib/decisionEngine';
 
 interface HomeScreenProps {
   onStartDecision: () => void;
+  onStartPersonalized: (preferences: PreferenceVector) => void;
 }
 
-export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
-  const [showCustom, setShowCustom] = useState(false);
+export default function HomeScreen({ onStartDecision, onStartPersonalized }: HomeScreenProps) {
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
 
   const handleCustomRecommendation = () => {
-    // 맞춤형 추천 시작 - DecisionFlow로 이동
-    onStartDecision();
+    setShowSurveyModal(true);
+  };
+
+  const handleSurveySubmit = (preferences: PreferenceVector) => {
+    setShowSurveyModal(false);
+    onStartPersonalized(preferences);
   };
 
   return (
@@ -69,10 +77,71 @@ export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
         {/* Info text */}
         <div className="pt-8">
           <p className="text-gray-500 text-sm">
-            💡 <strong>Tip:</strong> 맞춤형 추천은 상황과 기분에 맞는 메뉴를 제안합니다
+            💡 <strong>Tip:</strong> 맞춤형 추천은 6가지 질문으로 당신에게 딱 맞는 메뉴를 찾아줘요
           </p>
         </div>
+
+        {/* Legal disclaimer link */}
+        <div className="pt-4">
+          <button
+            onClick={() => setShowDisclaimerModal(true)}
+            className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
+          >
+            법적 고지사항
+          </button>
+        </div>
       </div>
+
+      {/* Survey Modal */}
+      <PersonalizedSurveyModal
+        isOpen={showSurveyModal}
+        onClose={() => setShowSurveyModal(false)}
+        onSubmit={handleSurveySubmit}
+      />
+
+      {/* Legal Disclaimer Modal */}
+      {showDisclaimerModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">⚖️ 법적 고지사항</h3>
+            <div className="text-sm text-gray-600 space-y-3 max-h-96 overflow-y-auto">
+              <p>
+                <strong>1. 의료 조언 아님 (Non-Medical Advice)</strong><br />
+                본 서비스는 음식 메뉴 추천을 위한 정보 제공 목적으로만 사용됩니다. 본 서비스의 추천은 의료적 진단, 치료, 또는 영양 상담을 대체하지 않으며, 특정 건강 상태나 식이 요법이 필요한 경우 반드시 전문 의료인과 상담하시기 바랍니다.
+              </p>
+              <p>
+                <strong>2. 광고 및 후원 아님 (Non-Advertising)</strong><br />
+                본 서비스에서 제공하는 메뉴 추천은 특정 음식점, 배달 서비스, 또는 식품 브랜드의 광고나 후원을 받지 않습니다. 추천 결과는 사용자가 입력한 선호도와 컨텍스트를 기반으로 생성되며, 어떠한 상업적 이익과도 무관합니다.
+              </p>
+              <p>
+                <strong>3. 알레르기 및 식이 제한 (Allergy & Dietary Restrictions)</strong><br />
+                본 서비스는 알레르기 정보나 특수 식이 제한사항을 완전히 고려하지 않습니다. 음식 알레르기가 있거나 특정 식이 요법을 따르는 경우, 반드시 메뉴를 주문하거나 조리하기 전에 재료를 확인하시기 바랍니다.
+              </p>
+              <p>
+                <strong>4. 책임의 제한 (Limitation of Liability)</strong><br />
+                본 서비스의 추천 결과를 사용함으로써 발생하는 어떠한 건강상, 재정적, 또는 기타 손해에 대해 서비스 제공자는 법적 책임을 지지 않습니다. 사용자는 자신의 판단과 책임 하에 본 서비스를 이용해야 합니다.
+              </p>
+              <p>
+                <strong>5. 정보의 정확성 (Information Accuracy)</strong><br />
+                본 서비스는 메뉴, 레시피, 재료 정보의 정확성을 보장하지 않으며, 정보는 예고 없이 변경될 수 있습니다. 사용자는 최종 결정을 내리기 전에 독립적으로 정보를 확인할 책임이 있습니다.
+              </p>
+              <p>
+                <strong>6. 제3자 링크 (Third-Party Links)</strong><br />
+                본 서비스는 배달 플랫폼, 레시피 사이트, 쇼핑 사이트 등 외부 서비스로의 링크를 제공할 수 있습니다. 이러한 외부 사이트의 내용, 정책, 또는 관행에 대해 서비스 제공자는 책임을 지지 않습니다.
+              </p>
+              <p className="text-xs text-gray-500 pt-2">
+                본 서비스를 계속 이용하시면 위 고지사항에 동의하는 것으로 간주됩니다.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowDisclaimerModal(false)}
+              className="mt-6 w-full py-3 px-6 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold hover:shadow-lg transition-all"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes blob {
