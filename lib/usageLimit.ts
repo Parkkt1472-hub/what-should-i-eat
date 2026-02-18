@@ -1,4 +1,4 @@
-export const DAILY_FREE_LIMIT = 3;
+export const DAILY_FREE_LIMIT = 100;
 
 export function getTodayUsageKey(): string {
   const today = new Date().toDateString();
