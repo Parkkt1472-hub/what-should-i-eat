@@ -1,17 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import PersonalizedSurveyModal from './PersonalizedSurveyModal';
+import HistoryModal from './HistoryModal';
+import StatsModal from './StatsModal';
+import { PreferenceVector } from '@/lib/decisionEngine';
+import { loadPreferences, hasStoredPreferences } from '@/lib/preferenceStorage';
+import { getHistoryCount } from '@/lib/historyStorage';
+import { getStats } from '@/lib/statsStorage';
 
 interface HomeScreenProps {
   onStartDecision: () => void;
+  onStartPersonalized: (preferences: PreferenceVector) => void;
 }
 
-export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
-  const [showCustom, setShowCustom] = useState(false);
+export default function HomeScreen({ onStartDecision, onStartPersonalized }: HomeScreenProps) {
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+
+  const [hasPreferences, setHasPreferences] = useState(false);
+  const [historyCount, setHistoryCount] = useState(0);
+  const [statsCount, setStatsCount] = useState(0);
+
+  useEffect(() => {
+    setHasPreferences(hasStoredPreferences());
+    setHistoryCount(getHistoryCount());
+    setStatsCount(getStats().totalDecisions);
+  }, []);
+
+  useEffect(() => {
+    if (!showHistoryModal) setHistoryCount(getHistoryCount());
+  }, [showHistoryModal]);
+
+  useEffect(() => {
+    if (!showStatsModal) setStatsCount(getStats().totalDecisions);
+  }, [showStatsModal]);
 
   const handleCustomRecommendation = () => {
-    // 맞춤형 추천 시작 - DecisionFlow로 이동
-    onStartDecision();
+    // 저장된 선호도가 있으면 바로 추천, 없으면 설문
+    if (hasPreferences) {
+      const stored = loadPreferences();
+      if (stored) {
+        onStartPersonalized(stored);
+        return;
+      }
+    }
+    setShowSurveyModal(true);
+  };
+
+  const handleSurveySubmit = (preferences: PreferenceVector) => {
+    setShowSurveyModal(false);
+    setHasPreferences(true);
+    onStartPersonalized(preferences);
   };
 
   return (
@@ -33,10 +75,10 @@ export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
             오늘 뭐 먹지?
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 font-light">
-            AI가 당신의 완벽한 한 끼를 찾아드립니다
+            오늘의 한 끼를 더 가볍게 결정해요
           </p>
         </div>
-        
+
         {/* Main CTA - 무작정 추천받기 */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-400 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse-slow"></div>
@@ -51,7 +93,7 @@ export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
             </span>
           </button>
         </div>
-        
+
         {/* Secondary CTA - 나의 맞춤형 추천받기 */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 via-pink-500 to-rose-400 rounded-full blur-lg opacity-60 group-hover:opacity-90 transition duration-1000 group-hover:duration-200"></div>
@@ -69,28 +111,128 @@ export default function HomeScreen({ onStartDecision }: HomeScreenProps) {
         {/* Info text */}
         <div className="pt-8">
           <p className="text-gray-500 text-sm">
-            💡 <strong>Tip:</strong> 맞춤형 추천은 상황과 기분에 맞는 메뉴를 제안합니다
+            💡 <strong>Tip:</strong> 맞춤형 추천은 6가지 질문으로 당신에게 맞는 메뉴를 찾아줘요
           </p>
+        </div>
+
+        {/* Action Links */}
+        <div className="pt-4 flex items-center gap-3 justify-center flex-wrap">
+          <button
+            onClick={() => setShowStatsModal(true)}
+            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1 font-semibold"
+          >
+            📊 통계 {statsCount > 0 && `(${statsCount})`}
+          </button>
+          <span className="text-gray-300">|</span>
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1"
+          >
+            📋 추천 기록 {historyCount > 0 && `(${historyCount})`}
+          </button>
+          <span className="text-gray-300">|</span>
+          <button
+            onClick={() => setShowDisclaimerModal(true)}
+            className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+          >
+            법적 고지사항
+          </button>
         </div>
       </div>
 
+      {/* Survey Modal */}
+      <PersonalizedSurveyModal
+        isOpen={showSurveyModal}
+        onClose={() => setShowSurveyModal(false)}
+        onSubmit={handleSurveySubmit}
+      />
+
+      {/* History Modal */}
+      <HistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} />
+
+      {/* Stats Modal */}
+      <StatsModal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} />
+
+      {/* Legal Disclaimer Modal */}
+      {showDisclaimerModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">⚖️ 법적 고지사항</h3>
+            <div className="text-sm text-gray-600 space-y-3 max-h-96 overflow-y-auto">
+              <p>
+                <strong>1. 의료 조언 아님</strong>
+                <br />
+                본 서비스의 추천은 참고용이며, 의료·건강 상담이나 치료를 대체하지 않습니다.
+              </p>
+              <p>
+                <strong>2. 알레르기 및 식이 제한</strong>
+                <br />
+                본 서비스는 알레르기/특수 식이 제한을 완전히 고려하지 않습니다. 주문/조리 전 재료를 확인해 주세요.
+              </p>
+              <p>
+                <strong>3. 정보/조건 변동</strong>
+                <br />
+                메뉴 정보 및 가격/재고/구매 조건은 판매처에 따라 달라질 수 있습니다.
+              </p>
+              <p>
+                <strong>4. 제3자 링크</strong>
+                <br />
+                외부 서비스로 연결되는 링크가 포함될 수 있으며, 해당 서비스의 정책/내용에 대해 책임지지 않습니다.
+              </p>
+              <p className="text-xs text-gray-500 pt-2">
+                본 서비스를 계속 이용하시면 위 고지사항에 동의하는 것으로 간주됩니다.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowDisclaimerModal(false)}
+              className="mt-6 w-full py-3 px-6 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold hover:shadow-lg transition-all"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          0%,
+          100% {
+            transform: translate(0, 0) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
         }
         @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
         }
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes pulse-slow {
-          0%, 100% { opacity: 0.75; }
-          50% { opacity: 1; }
+          0%,
+          100% {
+            opacity: 0.75;
+          }
+          50% {
+            opacity: 1;
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
