@@ -92,7 +92,17 @@ export function makeDecision(input: DecisionInput): DecisionResult {
     result.actions = [
       {
         type: 'delivery',
-        label: '배달 검색하기',
+        label: '배민에서 보기',
+        url: `https://www.google.com/search?q=${encodeURIComponent('배민 ' + selectedMenu.name)}`,
+      },
+      {
+        type: 'delivery',
+        label: '쿠팡이츠에서 보기',
+        url: `https://www.google.com/search?q=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name)}`,
+      },
+      {
+        type: 'delivery',
+        label: '지도에서 보기',
         url: `https://www.google.com/maps/search/${encodeURIComponent(selectedMenu.name + ' near me')}`,
       },
     ];
