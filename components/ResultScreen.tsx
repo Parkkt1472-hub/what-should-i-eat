@@ -126,12 +126,51 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 
                 const icons = ['📖', '🎥', '🛒', '🛵', '🗺️'];
                 
+                const handleClick = (e: React.MouseEvent) => {
+                  if (action.deepLink && action.fallbackUrl) {
+                    e.preventDefault();
+                    
+                    // Create invisible iframe to try deep link
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = action.deepLink;
+                    document.body.appendChild(iframe);
+                    
+                    // Track if app opened
+                    let appOpened = false;
+                    const startTime = Date.now();
+                    
+                    // Check if user left the page (app opened)
+                    const handleVisibilityChange = () => {
+                      if (document.hidden) {
+                        appOpened = true;
+                      }
+                    };
+                    
+                    document.addEventListener('visibilitychange', handleVisibilityChange);
+                    
+                    // Fallback to web URL if app didn't open
+                    setTimeout(() => {
+                      document.removeEventListener('visibilitychange', handleVisibilityChange);
+                      document.body.removeChild(iframe);
+                      
+                      const elapsedTime = Date.now() - startTime;
+                      
+                      // If app didn't open and not much time passed, open fallback
+                      if (!appOpened && elapsedTime < 2000) {
+                        window.open(action.fallbackUrl, '_blank');
+                      }
+                    }, 1500);
+                  }
+                };
+                
                 return (
                   <a
                     key={index}
                     href={action.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleClick}
                     className={`group w-full flex items-center justify-between bg-gradient-to-r ${colors[index % colors.length]} text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95`}
                   >
                     <span className="flex items-center gap-3">

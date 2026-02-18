@@ -19,6 +19,8 @@ interface DecisionResult {
     type: 'recipe' | 'youtube' | 'shopping' | 'delivery' | 'restaurant';
     label: string;
     url: string;
+    deepLink?: string;
+    fallbackUrl?: string;
   }[];
 }
 
@@ -98,21 +100,27 @@ export function makeDecision(input: DecisionInput): DecisionResult {
       });
     }
   } else if (how === '배달') {
+    const encodedMenu = encodeURIComponent(selectedMenu.name);
+    
     result.actions = [
       {
         type: 'delivery',
         label: '🛵 배민에서 보기',
-        url: `https://search.naver.com/search.naver?query=${encodeURIComponent('배민 ' + selectedMenu.name + ' 주문')}`,
+        url: `https://www.baemin.com/`,
+        deepLink: `baemin://search?query=${encodedMenu}`,
+        fallbackUrl: `https://www.baemin.com/`,
       },
       {
         type: 'delivery',
         label: '🛵 쿠팡이츠에서 보기',
-        url: `https://search.naver.com/search.naver?query=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name + ' 주문')}`,
+        url: `https://www.coupangeats.com/`,
+        deepLink: `coupangeats://search?query=${encodedMenu}`,
+        fallbackUrl: `https://www.coupangeats.com/`,
       },
       {
         type: 'delivery',
         label: '🗺️ 네이버지도에서 보기',
-        url: `https://map.naver.com/v5/search/${encodeURIComponent(selectedMenu.name)}`,
+        url: `https://map.naver.com/v5/search/${encodedMenu}`,
       },
     ];
   } else if (how === '외식') {
