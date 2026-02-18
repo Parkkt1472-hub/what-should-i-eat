@@ -1,12 +1,14 @@
 'use client';
 
+import Image from 'next/image';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+
 import { makeDecision } from '@/lib/decisionEngine';
 import { incrementUsage } from '@/lib/usageLimit';
+
 import { addToHistory } from '@/lib/historyStorage';
 import { recordDecision } from '@/lib/statsStorage';
 import { menuDatabase } from '@/lib/menuData';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
 
 // 쿠팡 파트너스 재료 구매 링크
 const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
@@ -20,89 +22,150 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [result, setResult] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
   const [previousMenu, setPreviousMenu] = useState<string>('');
+
+  // 룰렛/공유/적중률
   const [isRouletting, setIsRouletting] = useState(true);
   const [rouletteMenu, setRouletteMenu] = useState<string>('');
   const [matchScore, setMatchScore] = useState<number>(0);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
 
-  // 룰렛 애니메이션
+  const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
+
+  const getImagePath = (menuName: string) => encodeURI(`/food-images/${menuName}.jpg`);
+
+  // 룰렛 애니메이션 + 실제 결정(미리 계산 후 마지막에 확정)
   useEffect(() => {
     if (!isRouletting) return;
 
-    const candidateMenus = menuDatabase.map(m => m.name);
-    let intervalId: NodeJS.Timeout;
+    const candidateMenus = menuDatabase.map((m: any) => m.name);
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     let elapsed = 0;
     const duration = 800 + Math.random() * 700; // 0.8~1.5초
 
-    // 실제 추천 미리 계산
-    const mode = data.preferences ? 'personalized' : 'random';
-    const decision = makeDecision(data, { mode });
+    // 실제 추천 미리 계산 (이전 메뉴 제외도 반영)
+    const decision = makeDecision(
+      {
+        ...data,
+        ...(previousMenu ? { excludeMenu: previousMenu } : {}),
+      },
+      { mode }
+    );
 
     intervalId = setInterval(() => {
       elapsed += 50;
-      
+
       if (elapsed >= duration) {
-        clearInterval(intervalId);
+        if (intervalId) clearInterval(intervalId);
+
         setIsRouletting(false);
         setResult(decision);
         setPreviousMenu(decision.menu);
 
         // 통계 기록
-        const menuItem = menuDatabase.find(m => m.name === decision.menu);
-        recordDecision(decision.menu, menuItem?.spicyLevel);
+        const menuItem: any = menuDatabase.find((m: any) => m.name === decision.menu);
+        const spicyForStats =
+          menuItem?.meta?.spicy ?? menuItem?.spicyLevel ?? menuItem?.spicy ?? undefined;
+        recordDecision(decision.menu, spicyForStats);
 
-        // 히스토리에 저장
+        // 히스토리 저장
         addToHistory({
           menuName: decision.menu,
-          mode: mode,
+          mode,
           reason: decision.reason,
-          who: data.who,
-          how: data.how,
+          who: data?.who,
+          how: data?.how,
         });
 
-        // 적중률 계산 (personalized 모드만)
+        // 적중률 (참고용, personalized일 때만)
         if (mode === 'personalized') {
-          const score = 75 + Math.floor(Math.random() * 20); // 75-94%
+          const score = 75 + Math.floor(Math.random() * 20); // 75~94
           setMatchScore(score);
+        } else {
+          setMatchScore(0);
         }
       } else {
-        // 랜덤 메뉴 표시
+        // 룰렛 동안 랜덤 메뉴 표시
         const randomMenu = candidateMenus[Math.floor(Math.random() * candidateMenus.length)];
         setRouletteMenu(randomMenu);
       }
     }, 50);
 
-    return () => clearInterval(intervalId);
-  }, [data, isRouletting]);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [data, isRouletting, mode, previousMenu]);
 
   const handleGetAnotherRecommendation = () => {
-    setIsRouletting(true);
-    setImageError(false);
     incrementUsage();
+    setImageError(false);
+    setShowShareSuccess(false);
+    setResult(null);
+    setIsRouletting(true);
   };
 
   const handleShare = async () => {
+    if (!result?.menu) return;
+
+    const shareUrl = `${window.location.origin}?shared=${encodeURIComponent(result.menu)}`;
     const shareData = {
       title: '오늘 뭐 먹지?',
-      text: `오늘 뭐 먹지에서 나온 내 메뉴 👉 ${result.menu} 🍽️\n\n${result.reason}`,
-      url: `${window.location.origin}?shared=${encodeURIComponent(result.menu)}`,
+      text: `오늘 뭐 먹지에서 나온 내 메뉴 👉 ${result.menu} 🍽️\n\n${result.reason ?? ''}`.trim(),
+      url: shareUrl,
     };
 
     try {
       if (navigator.share) {
-        await navigator.share(shareData);
+        await navigator.share(shareData as any);
       } else {
-        // Fallback: 링크 복사
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(shareUrl);
         setShowShareSuccess(true);
         setTimeout(() => setShowShareSuccess(false), 2000);
       }
-    } catch (error) {
-      console.log('Share failed:', error);
+    } catch {
+      // 공유 취소/실패는 조용히 무시
     }
   };
 
-  // 룰렛 중
+  // 딥링크(배달앱 등) 안정적으로 열기: 모바일에서 iframe + visibility 체크
+  const handleActionClick = (action: any) => (e: MouseEvent) => {
+    if (!action?.deepLink || action.type !== 'delivery') return;
+
+    e.preventDefault();
+
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    const fallback = action.fallbackUrl || action.url;
+
+    if (isAndroid || isIOS) {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = action.deepLink;
+      document.body.appendChild(iframe);
+
+      let appOpened = false;
+      const checkVisibility = () => {
+        if (document.hidden) appOpened = true;
+      };
+      document.addEventListener('visibilitychange', checkVisibility);
+
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', checkVisibility);
+        try {
+          document.body.removeChild(iframe);
+        } catch {}
+
+        if (!appOpened) {
+          window.open(fallback, '_blank');
+        }
+      }, 1500);
+    } else {
+      window.open(fallback, '_blank');
+    }
+  };
+
+  // 룰렛 화면
   if (isRouletting) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -122,10 +185,35 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
             <p className="text-gray-500">완벽한 메뉴를 찾는 중...</p>
           </div>
         </div>
+
+        <style jsx>{`
+          @keyframes blob {
+            0%,
+            100% {
+              transform: translate(0, 0) scale(1);
+            }
+            33% {
+              transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+              transform: translate(-20px, 20px) scale(0.9);
+            }
+          }
+          .animate-blob {
+            animation: blob 7s infinite;
+          }
+          .animation-delay-2000 {
+            animation-delay: 2s;
+          }
+          .animation-delay-4000 {
+            animation-delay: 4s;
+          }
+        `}</style>
       </div>
     );
   }
 
+  // 결과가 아직 없으면 로딩
   if (!result) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -134,11 +222,13 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     );
   }
 
-  const getImagePath = (menuName: string) => {
-    return encodeURI(`/food-images/${menuName}.jpg`);
-  };
-
-  const mode = data.preferences ? 'personalized' : 'random';
+  const gradients = [
+    'from-orange-500 to-red-500',
+    'from-pink-500 to-purple-500',
+    'from-blue-500 to-cyan-500',
+    'from-green-500 to-teal-500',
+    'from-indigo-500 to-blue-500',
+  ];
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -150,7 +240,6 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       </div>
 
       <div className="w-full max-w-2xl relative z-10">
-        {/* Result card with animation */}
         <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-orange-100 animate-scale-in">
           {/* Food image */}
           <div className="relative w-full h-80 bg-gradient-to-br from-orange-100 to-amber-100">
@@ -168,15 +257,12 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 <span className="text-9xl">{result.emoji || '🍽️'}</span>
               </div>
             )}
-            
-            {/* Overlay gradient */}
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            
-            {/* Menu name overlay */}
+
             <div className="absolute bottom-0 left-0 right-0 p-6">
-              <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">
-                {result.menu}
-              </h1>
+              <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">{result.menu}</h1>
+
               {mode === 'personalized' && matchScore > 0 && (
                 <div className="inline-block bg-white/90 backdrop-blur-sm rounded-full px-4 py-2">
                   <span className="text-sm font-semibold text-orange-600">
@@ -192,9 +278,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
           <div className="p-8">
             {/* Reason */}
             <div className="mb-6">
-              <p className="text-xl text-gray-700 leading-relaxed">
-                {result.reason}
-              </p>
+              <p className="text-xl text-gray-700 leading-relaxed">{result.reason}</p>
             </div>
 
             {/* Ingredients */}
@@ -211,8 +295,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                     </span>
                   ))}
                 </div>
-                
-                {/* Coupang shopping link */}
+
                 <a
                   href={COUPANG_INGREDIENT_BUY_URL}
                   target="_blank"
@@ -224,67 +307,26 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3">
-              {result.actions.map((action: any, index: number) => {
-                const gradients = [
-                  'from-orange-500 to-red-500',
-                  'from-pink-500 to-purple-500',
-                  'from-blue-500 to-cyan-500',
-                  'from-green-500 to-teal-500',
-                  'from-indigo-500 to-blue-500',
-                ];
-                const gradient = gradients[index % gradients.length];
-
-                const handleClick = (e: React.MouseEvent) => {
-                  if (action.deepLink && (action.type === 'delivery')) {
-                    e.preventDefault();
-                    
-                    const isAndroid = /Android/i.test(navigator.userAgent);
-                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-                    if (isAndroid || isIOS) {
-                      const iframe = document.createElement('iframe');
-                      iframe.style.display = 'none';
-                      iframe.src = action.deepLink;
-                      document.body.appendChild(iframe);
-
-                      let appOpened = false;
-                      const checkVisibility = () => {
-                        if (document.hidden) {
-                          appOpened = true;
-                        }
-                      };
-                      document.addEventListener('visibilitychange', checkVisibility);
-
-                      setTimeout(() => {
-                        document.removeEventListener('visibilitychange', checkVisibility);
-                        document.body.removeChild(iframe);
-                        
-                        if (!appOpened) {
-                          window.open(action.fallbackUrl || action.url, '_blank');
-                        }
-                      }, 1500);
-                    } else {
-                      window.open(action.fallbackUrl || action.url, '_blank');
-                    }
-                  }
-                };
-
-                return (
-                  <a
-                    key={index}
-                    href={action.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleClick}
-                    className={`block w-full py-4 px-6 rounded-xl bg-gradient-to-r ${gradient} text-white font-semibold text-center hover:shadow-xl transition-all transform hover:scale-105`}
-                  >
-                    {action.label}
-                  </a>
-                );
-              })}
-            </div>
+            {/* Action buttons (recipes / videos / delivery etc) */}
+            {Array.isArray(result.actions) && result.actions.length > 0 && (
+              <div className="space-y-3 pt-2">
+                {result.actions.map((action: any, index: number) => {
+                  const gradient = gradients[index % gradients.length];
+                  return (
+                    <a
+                      key={index}
+                      href={action.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleActionClick(action)}
+                      className={`block w-full py-4 px-6 rounded-xl bg-gradient-to-r ${gradient} text-white font-semibold text-center hover:shadow-xl transition-all transform hover:scale-105`}
+                    >
+                      {action.label}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Secondary actions */}
             <div className="mt-6 flex gap-3">
@@ -294,7 +336,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               >
                 🎲 다시 돌리기
               </button>
-              
+
               <button
                 onClick={handleShare}
                 className="py-4 px-6 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all"
@@ -309,7 +351,6 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               </div>
             )}
 
-            {/* Back button */}
             <button
               onClick={onBackToHome}
               className="mt-4 w-full py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition-all"
@@ -319,27 +360,43 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
           </div>
         </div>
 
-        {/* Footer tip */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            💡 마음에 안 들면 언제든 다시 돌려보세요!
-          </p>
+          <p className="text-sm text-gray-500">💡 마음에 안 들면 언제든 다시 돌려보세요!</p>
         </div>
       </div>
 
       <style jsx>{`
         @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          0%,
+          100% {
+            transform: translate(0, 0) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
         }
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes scale-in {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
