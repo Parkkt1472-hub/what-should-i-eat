@@ -1,22 +1,9 @@
 'use client';
 
 import { makeDecision } from '@/lib/decisionEngine';
+import { incrementUsage } from '@/lib/usageLimit';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
-{!imageError ? (
-  <img
-    src={getImagePath(result.menu)}
-    alt={result.menu}
-    className="absolute inset-0 w-full h-full object-cover"
-    loading="eager"
-    onError={() => setImageError(true)}
-  />
-) : (
-  <div className="w-full h-full flex items-center justify-center">
-    <span className="text-9xl">{result.emoji || '🍽️'}</span>
-  </div>
-)}
-
-
 
 interface ResultScreenProps {
   data: any;
@@ -26,11 +13,28 @@ interface ResultScreenProps {
 export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) {
   const [result, setResult] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
+  const [previousMenu, setPreviousMenu] = useState<string>('');
 
   useEffect(() => {
     const decision = makeDecision(data);
     setResult(decision);
+    setPreviousMenu(decision.menu);
   }, [data]);
+
+  const handleGetAnotherRecommendation = () => {
+    // Increment usage for each new recommendation
+    incrementUsage();
+    
+    // Generate new decision with excluded previous menu
+    const newDecision = makeDecision({
+      ...data,
+      excludeMenu: previousMenu,
+    });
+    
+    setResult(newDecision);
+    setPreviousMenu(newDecision.menu);
+    setImageError(false);
+  };
 
   if (!result) {
     return (
@@ -40,11 +44,10 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     );
   }
 
- const getImagePath = (menuName: string) => {
-  // 한글/공백/특수문자 안전하게 인코딩
-  return encodeURI(`/food-images/${menuName}.jpg`);
-};
-
+  const getImagePath = (menuName: string) => {
+    // 한글/공백/특수문자 안전하게 인코딩
+    return encodeURI(`/food-images/${menuName}.jpg`);
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -123,12 +126,31 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 
                 const icons = ['📖', '🎥', '🛒', '🛵', '🗺️'];
                 
+                const handleClick = (e: React.MouseEvent) => {
+                  // For delivery apps with deep links
+                  if (action.deepLink && action.fallbackUrl) {
+                    e.preventDefault();
+                    
+                    // Try deep link (will open app if installed)
+                    window.location.href = action.deepLink;
+                    
+                    // Fallback to website after short delay
+                    setTimeout(() => {
+                      // Only open fallback if still on same page (app didn't open)
+                      if (!document.hidden) {
+                        window.location.href = action.fallbackUrl;
+                      }
+                    }, 1000);
+                  }
+                };
+                
                 return (
                   <a
                     key={index}
                     href={action.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleClick}
                     className={`group w-full flex items-center justify-between bg-gradient-to-r ${colors[index % colors.length]} text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95`}
                   >
                     <span className="flex items-center gap-3">
@@ -143,13 +165,24 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               })}
             </div>
 
+            {/* Another recommendation button */}
+            <button
+              onClick={handleGetAnotherRecommendation}
+              className="w-full mt-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <span className="text-xl">🔁</span>
+                <span>다른 추천</span>
+              </span>
+            </button>
+
             {/* Reset button */}
             <button
               onClick={onBackToHome}
-              className="w-full mt-6 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-4 px-6 rounded-2xl transform transition-all duration-300 hover:scale-105 active:scale-95"
+              className="w-full mt-2 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-4 px-6 rounded-2xl transform transition-all duration-300 hover:scale-105 active:scale-95"
             >
               <span className="flex items-center justify-center gap-2">
-                <span className="text-xl">🔄</span>
+                <span className="text-xl">🏠</span>
                 <span>처음으로 돌아가기</span>
               </span>
             </button>
