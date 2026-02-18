@@ -26,9 +26,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     );
   }
 
-  const getImagePath = (menuName: string) => {
-    return `/food-images/${menuName}.jpg`;
-  };
+ const getImagePath = (menuName: string) => {
+  // 한글/공백/특수문자 안전하게 인코딩
+  return encodeURI(`/food-images/${menuName}.jpg`);
+};
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
