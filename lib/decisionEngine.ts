@@ -152,48 +152,68 @@ function selectWeightedRandom(candidates: { item: MenuItem; score: number }[]): 
   return candidates[0].item;
 }
 
-// Generate personalized reason
+// Generate personalized reason with fun tone
 function generatePersonalizedReason(item: MenuItem, prefs: PreferenceVector, who: WhoType): string {
   const meta = item.meta || getDefaultMeta(item);
   const reasons: string[] = [];
   
-  // Analyze why this was recommended
+  // Analyze why this was recommended (fun tone)
   if (prefs.spicy > 0 && meta.spicy >= 2) {
-    reasons.push('매운 음식을 좋아하시는 분께 딱이에요');
+    const spicyReasons = [
+      '매운 거 당기는 날, 이건 거의 운명',
+      '매운맛 러버를 위한 완벽한 선택',
+      '얼큰하게 한 번 가시죠!',
+    ];
+    reasons.push(getRandomItem(spicyReasons));
   } else if (prefs.spicy === 0 && meta.spicy === 0) {
-    reasons.push('맵지 않아 부담 없이 드실 수 있어요');
+    reasons.push('맵찔이도 안심하고 먹을 수 있는 메뉴');
   }
   
   if (prefs.soup >= 1 && meta.soup >= 1) {
-    reasons.push('따뜻한 국물이 생각날 때 좋아요');
+    const soupReasons = [
+      '오늘은 국물각이야',
+      '따뜻한 국물로 힐링 타임',
+      '국물 한 모금의 행복',
+    ];
+    reasons.push(getRandomItem(soupReasons));
   }
   
   if (prefs.preferRice && meta.rice) {
-    reasons.push('밥과 함께 든든하게 즐기실 수 있어요');
+    reasons.push('밥 한 공기 뚝딱 해치우기 좋은 메뉴');
   }
   
   if (prefs.preferNoodle && meta.noodle) {
-    reasons.push('면 요리를 선호하시는 분께 추천드려요');
+    reasons.push('면 러버라면 이건 무조건');
   }
   
   if (prefs.meat >= 2 && meta.meat >= 2) {
-    reasons.push('고기가 풍부해서 만족스러워요');
+    const meatReasons = [
+      '고기 먹고 싶을 때 이거지!',
+      '육식 본능을 만족시키는 선택',
+      '고기가 메인이라 든든함',
+    ];
+    reasons.push(getRandomItem(meatReasons));
   }
   
   if (prefs.seafood >= 2 && meta.seafood >= 2) {
-    reasons.push('신선한 해산물 맛을 즐기실 수 있어요');
+    reasons.push('신선한 바다의 맛');
   }
   
   if (prefs.veg >= 2 && meta.veg >= 2) {
-    reasons.push('채소가 많아 건강하게 드실 수 있어요');
+    reasons.push('채소 가득해서 속이 편안한 메뉴');
   }
   
   if (prefs.time === 0 && meta.time === 0) {
-    reasons.push('빠르게 준비할 수 있어 시간이 없을 때 좋아요');
+    const quickReasons = [
+      '빠르게 먹고 치고 빠지기 좋은 선택',
+      '시간 없을 때 딱인 메뉴',
+      '바쁜 현대인을 위한 메뉴',
+    ];
+    reasons.push(getRandomItem(quickReasons));
   }
   
   if (prefs.budget === 0 && meta.budget === 0) {
-    reasons.push('경제적이면서도 맛있는 선택이에요');
+    reasons.push('가성비 갑 메뉴');
   }
   
   // Fallback to generic reason
@@ -201,17 +221,8 @@ function generatePersonalizedReason(item: MenuItem, prefs: PreferenceVector, who
     return generateReason(who, item);
   }
   
-  // Pick 1-2 reasons
-  if (reasons.length === 1) {
-    return reasons[0];
-  }
-  
-  const selected = [reasons[0]];
-  if (reasons.length > 1 && Math.random() > 0.5) {
-    selected.push(reasons[Math.floor(Math.random() * (reasons.length - 1)) + 1]);
-  }
-  
-  return selected.join('. ');
+  // Pick 1 reason (simpler is better)
+  return getRandomItem(reasons);
 }
 
 // Personalized decision

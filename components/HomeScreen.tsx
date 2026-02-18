@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
+import StatsModal from './StatsModal';
 import { PreferenceVector } from '@/lib/decisionEngine';
 import { loadPreferences, hasStoredPreferences } from '@/lib/preferenceStorage';
 import { getHistoryCount } from '@/lib/historyStorage';
+import { getStats } from '@/lib/statsStorage';
 
 interface HomeScreenProps {
   onStartDecision: () => void;
@@ -15,23 +17,33 @@ interface HomeScreenProps {
 export default function HomeScreen({ onStartDecision, onStartPersonalized }: HomeScreenProps) {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [hasPreferences, setHasPreferences] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
+  const [statsCount, setStatsCount] = useState(0);
 
   useEffect(() => {
     // 저장된 선호도 확인
     setHasPreferences(hasStoredPreferences());
     // 히스토리 개수 확인
     setHistoryCount(getHistoryCount());
+    // 통계 개수 확인
+    setStatsCount(getStats().totalDecisions);
   }, []);
 
-  // 모달이 닫힐 때 히스토리 개수 업데이트
+  // 모달이 닫힐 때 업데이트
   useEffect(() => {
     if (!showHistoryModal) {
       setHistoryCount(getHistoryCount());
     }
   }, [showHistoryModal]);
+
+  useEffect(() => {
+    if (!showStatsModal) {
+      setStatsCount(getStats().totalDecisions);
+    }
+  }, [showStatsModal]);
 
   const handleCustomRecommendation = () => {
     // 저장된 선호도가 있으면 바로 추천, 없으면 설문조사
@@ -111,7 +123,14 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         </div>
 
         {/* Action Links */}
-        <div className="pt-4 flex items-center gap-4 justify-center">
+        <div className="pt-4 flex items-center gap-3 justify-center flex-wrap">
+          <button
+            onClick={() => setShowStatsModal(true)}
+            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1 font-semibold"
+          >
+            📊 통계 {statsCount > 0 && `(${statsCount})`}
+          </button>
+          <span className="text-gray-300">|</span>
           <button
             onClick={() => setShowHistoryModal(true)}
             className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1"
@@ -139,6 +158,12 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
       <HistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
+      />
+
+      {/* Stats Modal */}
+      <StatsModal
+        isOpen={showStatsModal}
+        onClose={() => setShowStatsModal(false)}
       />
 
       {/* Legal Disclaimer Modal */}
