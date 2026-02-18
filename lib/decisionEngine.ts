@@ -8,6 +8,7 @@ interface DecisionInput {
   who: WhoType;
   how: HowType;
   outdoor: OutdoorType | null;
+  excludeMenu?: string;
 }
 
 interface DecisionResult {
@@ -49,12 +50,20 @@ function generateReason(who: WhoType, menu: MenuItem): string {
 }
 
 export function makeDecision(input: DecisionInput): DecisionResult {
-  const { who, how, outdoor } = input;
+  const { who, how, outdoor, excludeMenu } = input;
   
   // Filter menu based on context
-  const availableMenus = filterMenuByContext(who);
-  const selectedMenu = getRandomItem(availableMenus);
+  let availableMenus = filterMenuByContext(who);
   
+  // Exclude previous menu if provided (with retry logic)
+  if (excludeMenu) {
+    const filteredMenus = availableMenus.filter(item => item.name !== excludeMenu);
+    if (filteredMenus.length > 0) {
+      availableMenus = filteredMenus;
+    }
+  }
+  
+  const selectedMenu = getRandomItem(availableMenus);
   const reason = generateReason(who, selectedMenu);
   
   const result: DecisionResult = {
@@ -92,36 +101,36 @@ export function makeDecision(input: DecisionInput): DecisionResult {
     result.actions = [
       {
         type: 'delivery',
-        label: '배민에서 보기',
-        url: `https://www.google.com/search?q=site:baemin.com+${encodeURIComponent(selectedMenu.name)}`,
+        label: '🛵 배민에서 보기',
+        url: `https://search.naver.com/search.naver?query=${encodeURIComponent('배민 ' + selectedMenu.name + ' 주문')}`,
       },
       {
         type: 'delivery',
-        label: '쿠팡이츠에서 보기',
-        url: `https://www.google.com/search?q=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name + ' 주문')}`,
+        label: '🛵 쿠팡이츠에서 보기',
+        url: `https://search.naver.com/search.naver?query=${encodeURIComponent('쿠팡이츠 ' + selectedMenu.name + ' 주문')}`,
       },
       {
         type: 'delivery',
-        label: '지도에서 보기',
-        url: `https://www.google.com/maps/search/${encodeURIComponent(selectedMenu.name + ' near me')}`,
+        label: '🗺️ 네이버지도에서 보기',
+        url: `https://map.naver.com/v5/search/${encodeURIComponent(selectedMenu.name)}`,
       },
     ];
   } else if (how === '외식') {
     let searchQuery = '';
     
     if (outdoor === '근처 간단 외식') {
-      searchQuery = `${selectedMenu.name} near me`;
-    } else if (outdoor === '가까운 시내') {
       searchQuery = `${selectedMenu.name} 맛집`;
+    } else if (outdoor === '가까운 시내') {
+      searchQuery = `맛집`;
     } else if (outdoor === '기분전환 야외') {
-      searchQuery = `전망 좋은 ${selectedMenu.name} 맛집`;
+      searchQuery = `전망 좋은 식당`;
     }
     
     result.actions = [
       {
         type: 'restaurant',
-        label: '식당 찾기',
-        url: `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`,
+        label: '🗺️ 네이버지도에서 식당 찾기',
+        url: `https://map.naver.com/v5/search/${encodeURIComponent(searchQuery)}`,
       },
     ];
   }
