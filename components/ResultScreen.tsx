@@ -2,7 +2,21 @@
 
 import { makeDecision } from '@/lib/decisionEngine';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+{!imageError ? (
+  <img
+    src={getImagePath(result.menu)}
+    alt={result.menu}
+    className="absolute inset-0 w-full h-full object-cover"
+    loading="eager"
+    onError={() => setImageError(true)}
+  />
+) : (
+  <div className="w-full h-full flex items-center justify-center">
+    <span className="text-9xl">{result.emoji || '🍽️'}</span>
+  </div>
+)}
+
+
 
 interface ResultScreenProps {
   data: any;
