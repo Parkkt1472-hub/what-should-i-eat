@@ -1,4 +1,5 @@
 import { menuDatabase, reasonTemplates, MenuItem, getDefaultMeta } from './menuData';
+import { getCurrentWeather, getWeatherMultiplier, type WeatherData } from './weatherService';
 
 type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
@@ -74,8 +75,8 @@ function generateReason(who: WhoType, menu: MenuItem): string {
   return getRandomItem(templates);
 }
 
-// Score a menu based on preferences
-function scoreMenu(item: MenuItem, prefs: PreferenceVector): number {
+// Score a menu based on preferences and weather
+function scoreMenu(item: MenuItem, prefs: PreferenceVector, weather?: WeatherData | null): number {
   const meta = item.meta || getDefaultMeta(item);
   let score = 100; // Base score
 
@@ -118,6 +119,23 @@ function scoreMenu(item: MenuItem, prefs: PreferenceVector): number {
 
   // Budget preference
   score -= Math.abs(prefs.budget - meta.budget) * 12;
+
+  // Weather-based multiplier (참고용)
+  if (weather) {
+    const multiplier = getWeatherMultiplier(weather);
+    
+    // Apply weather multipliers to relevant menu attributes
+    if (meta.soup >= 2) {
+      score = score * multiplier.soup;
+    }
+    if (meta.spicy >= 2) {
+      score = score * multiplier.spicy;
+    }
+    // Cold food bonus (샐러드, 냉면 등 차가운 음식은 tags에 'cold' 포함)
+    if (meta.tags?.includes('cold')) {
+      score = score * multiplier.cold;
+    }
+  }
 
   return Math.max(0, score);
 }
@@ -297,7 +315,7 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
 
   const scored = availableMenus.map((item) => ({
     item,
-    score: scoreMenu(item, preferences),
+    score: scoreMenu(item, preferences, null), // Weather will be integrated in future version
   }));
 
   scored.sort((a, b) => b.score - a.score);
