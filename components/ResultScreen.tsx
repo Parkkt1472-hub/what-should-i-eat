@@ -9,6 +9,7 @@ import { incrementUsage } from '@/lib/usageLimit';
 import { addToHistory } from '@/lib/historyStorage';
 import { recordDecision } from '@/lib/statsStorage';
 import { menuDatabase } from '@/lib/menuData';
+import { getCurrentWeather, getWeatherDescription, type WeatherData } from '@/lib/weatherService';
 
 // 쿠팡 파트너스 재료 구매 링크
 const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
@@ -28,10 +29,22 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [rouletteMenu, setRouletteMenu] = useState<string>('');
   const [matchScore, setMatchScore] = useState<number>(0);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherDesc, setWeatherDesc] = useState<string | null>(null);
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
   const getImagePath = (menuName: string) => encodeURI(`/food-images/${menuName}.jpg`);
+
+  // 날씨 정보 가져오기
+  useEffect(() => {
+    getCurrentWeather().then((w) => {
+      if (w) {
+        setWeather(w);
+        setWeatherDesc(getWeatherDescription(w));
+      }
+    });
+  }, []);
 
   // 룰렛 애니메이션 + 실제 결정(미리 계산 후 마지막에 확정)
   useEffect(() => {
@@ -276,6 +289,16 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
           {/* Content */}
           <div className="p-8">
+            {/* Weather Info */}
+            {weatherDesc && (
+              <div className="mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-base text-blue-800 font-medium flex items-center gap-2">
+                  <span>🌡️</span>
+                  <span>{weatherDesc}</span>
+                </p>
+              </div>
+            )}
+
             {/* Reason */}
             <div className="mb-6">
               <p className="text-xl text-gray-700 leading-relaxed">{result.reason}</p>
@@ -329,20 +352,27 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
             )}
 
             {/* Secondary actions */}
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 space-y-3">
               <button
                 onClick={handleGetAnotherRecommendation}
-                className="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold hover:shadow-xl transition-all transform hover:scale-105"
+                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold hover:shadow-xl transition-all transform hover:scale-105"
               >
                 🎲 다시 돌리기
               </button>
 
-              <button
-                onClick={handleShare}
-                className="py-4 px-6 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all"
-              >
-                📤 공유
-              </button>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
+                <button
+                  onClick={handleShare}
+                  className="relative w-full py-4 px-6 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="text-xl">📤</span>
+                    <span>친구에게 공유하기</span>
+                    <span className="text-xl">✨</span>
+                  </span>
+                </button>
+              </div>
             </div>
 
             {showShareSuccess && (

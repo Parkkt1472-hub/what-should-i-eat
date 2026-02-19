@@ -23,11 +23,19 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
   const [hasPreferences, setHasPreferences] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
   const [statsCount, setStatsCount] = useState(0);
+  const [topMenu, setTopMenu] = useState<{ menuName: string; count: number } | null>(null);
 
   useEffect(() => {
     setHasPreferences(hasStoredPreferences());
     setHistoryCount(getHistoryCount());
     setStatsCount(getStats().totalDecisions);
+    
+    // Get top menu
+    const { getTopMenus } = require('@/lib/statsStorage');
+    const tops = getTopMenus(1);
+    if (tops.length > 0) {
+      setTopMenu(tops[0]);
+    }
   }, []);
 
   useEffect(() => {
@@ -79,6 +87,24 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           </p>
         </div>
 
+        {/* 🔥 오늘의 TOP 1 메뉴 배너 */}
+        {topMenu && (
+          <div className="relative group animate-fade-in">
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse-slow"></div>
+            <div className="relative bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-5 rounded-2xl shadow-xl">
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🔥</span>
+                <div className="text-center">
+                  <p className="text-sm font-semibold opacity-90">지금 가장 인기있는 메뉴</p>
+                  <p className="text-2xl md:text-3xl font-bold">{topMenu.menuName}</p>
+                  <p className="text-xs opacity-75 mt-1">{topMenu.count}명이 선택했어요!</p>
+                </div>
+                <span className="text-3xl">🔥</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main CTA - 무작정 추천받기 */}
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-400 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse-slow"></div>
@@ -115,25 +141,40 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           </p>
         </div>
 
-        {/* Action Links */}
-        <div className="pt-4 flex items-center gap-3 justify-center flex-wrap">
+        {/* Action Cards - 더 크고 눈에 띄게 */}
+        <div className="pt-4 grid grid-cols-2 gap-4 w-full max-w-xl">
           <button
             onClick={() => setShowStatsModal(true)}
-            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1 font-semibold"
+            className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-blue-200 hover:border-blue-400 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
-            📊 통계 {statsCount > 0 && `(${statsCount})`}
+            <div className="text-center">
+              <div className="text-4xl mb-2">📊</div>
+              <p className="text-base font-bold text-gray-800">통계 보기</p>
+              {statsCount > 0 && (
+                <p className="text-xs text-gray-500 mt-1">{statsCount}회 추천</p>
+              )}
+            </div>
           </button>
-          <span className="text-gray-300">|</span>
+
           <button
             onClick={() => setShowHistoryModal(true)}
-            className="text-sm text-gray-600 hover:text-orange-600 underline transition-colors flex items-center gap-1"
+            className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-purple-200 hover:border-purple-400 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
-            📋 추천 기록 {historyCount > 0 && `(${historyCount})`}
+            <div className="text-center">
+              <div className="text-4xl mb-2">📋</div>
+              <p className="text-base font-bold text-gray-800">추천 기록</p>
+              {historyCount > 0 && (
+                <p className="text-xs text-gray-500 mt-1">{historyCount}개 기록</p>
+              )}
+            </div>
           </button>
-          <span className="text-gray-300">|</span>
+        </div>
+
+        {/* Legal Disclaimer Link */}
+        <div className="pt-2">
           <button
             onClick={() => setShowDisclaimerModal(true)}
-            className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+            className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
           >
             법적 고지사항
           </button>
