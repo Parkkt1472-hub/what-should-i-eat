@@ -8,7 +8,7 @@ interface DecisionFlowProps {
 
 type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
-type OutdoorType = '근처 간단 외식' | '가까운 시내' | '기분전환 야외';
+type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
 const whoIcons: Record<WhoType, string> = {
   '나 혼자': '👤',
@@ -24,9 +24,8 @@ const howIcons: Record<HowType, string> = {
 };
 
 const outdoorIcons: Record<OutdoorType, string> = {
-  '근처 간단 외식': '🏘️',
-  '가까운 시내': '🏙️',
-  '기분전환 야외': '🌳',
+  '근처에서 찾기': '📍',
+  '기분전환 야외': '🌿',
 };
 
 export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
@@ -144,16 +143,16 @@ export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
               </h2>
               <p className="text-gray-600 text-lg">장소에 맞는 맛집을 찾아드릴게요</p>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:gap-6">
-              {(['근처 간단 외식', '가까운 시내', '기분전환 야외'] as OutdoorType[]).map((option) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {(['근처에서 찾기', '기분전환 야외'] as OutdoorType[]).map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOutdoorSelect(option)}
-                  className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl text-gray-800 text-xl md:text-2xl font-semibold py-10 md:py-12 px-8 rounded-3xl transform transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                  className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl text-gray-800 text-xl md:text-2xl font-semibold py-12 md:py-16 px-8 rounded-3xl transform transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center justify-center gap-4">
-                    <span className="text-5xl">{outdoorIcons[option]}</span>
+                  <div className="relative flex flex-col items-center justify-center gap-4">
+                    <span className="text-6xl">{outdoorIcons[option]}</span>
                     <span>{option}</span>
                   </div>
                 </button>
