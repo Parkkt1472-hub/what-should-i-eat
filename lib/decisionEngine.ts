@@ -2,7 +2,7 @@ import { menuDatabase, reasonTemplates, MenuItem, getDefaultMeta } from './menuD
 
 type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
-type OutdoorType = '근처 간단 외식' | '가까운 시내' | '기분전환 야외';
+type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
 // Decision modes
 export type DecisionMode = 'random' | 'personalized';
@@ -245,15 +245,36 @@ function buildResult(
     ];
   } else if (how === '외식') {
     let searchQuery = '';
-
-    if (outdoor === '근처 간단 외식') searchQuery = `${selectedMenu.name} 맛집`;
-    else if (outdoor === '가까운 시내') searchQuery = `맛집`;
-    else if (outdoor === '기분전환 야외') searchQuery = `전망 좋은 식당`;
-
+    let actionLabel = '🗺️ 네이버지도에서 식당 찾기';
+    
+    if (outdoor === '근처에서 찾기') {
+      searchQuery = `${selectedMenu.name} 맛집`;
+      actionLabel = '📍 근처 맛집 찾기';
+    } else if (outdoor === '기분전환 야외') {
+      // 테마 키워드 랜덤 선택
+      const themeQueries = [
+        `${selectedMenu.name} 전망 좋은 식당`,
+        `${selectedMenu.name} 뷰 맛집`,
+        `${selectedMenu.name} 드라이브 맛집`,
+        `근교 드라이브 맛집`,
+        `바다뷰 맛집`,
+        `야경 맛집`,
+        `한옥 맛집`,
+        `루프탑 맛집`,
+        `데이트 코스 맛집`,
+      ];
+      searchQuery = getRandomItem(themeQueries);
+      actionLabel = '🌿 기분전환 맛집 찾기';
+    } else {
+      // Fallback: outdoor가 null이거나 예상 밖 값인 경우
+      searchQuery = `${selectedMenu.name} 맛집`;
+      actionLabel = '📍 근처 맛집 찾기';
+    }
+    
     result.actions = [
       {
         type: 'restaurant',
-        label: '🗺️ 네이버지도에서 식당 찾기',
+        label: actionLabel,
         url: `https://map.naver.com/v5/search/${encodeURIComponent(searchQuery)}`,
       },
     ];
