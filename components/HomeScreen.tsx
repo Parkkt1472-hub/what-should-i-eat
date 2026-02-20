@@ -9,7 +9,7 @@ import LocalRestaurantsModal from './LocalRestaurantsModal';
 import { PreferenceVector } from '@/lib/decisionEngine';
 import { loadPreferences, hasStoredPreferences } from '@/lib/preferenceStorage';
 import { getHistoryCount } from '@/lib/historyStorage';
-import { getStats } from '@/lib/statsStorage';
+import { getStats, getCachedTop1Menu } from '@/lib/statsStorage';
 import { getStoredLocation, saveLocation, hasStoredLocation } from '@/lib/locationStorage';
 
 interface HomeScreenProps {
@@ -37,11 +37,11 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
     setStatsCount(getStats().totalDecisions);
     setUserLocation(getStoredLocation());
     
-    // Get top menu
-    const { getTopMenus } = require('@/lib/statsStorage');
-    const tops = getTopMenus(1);
-    if (tops.length > 0) {
-      setTopMenu(tops[0]);
+    // Get cached top menu (하루 단위 캐시)
+    const { getCachedTop1Menu } = require('@/lib/statsStorage');
+    const top1 = getCachedTop1Menu();
+    if (top1) {
+      setTopMenu(top1);
     }
 
     // 첫 방문 시 지역 입력 모달 표시 (1초 후)
