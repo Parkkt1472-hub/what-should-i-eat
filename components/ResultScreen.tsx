@@ -13,6 +13,9 @@ import { getCurrentWeather, getWeatherDescription, type WeatherData } from '@/li
 import { getStoredLocation } from '@/lib/locationStorage';
 import LocalRestaurantsModal from './LocalRestaurantsModal';
 import MoodPlacesModal from './MoodPlacesModal';
+import AdventurePlaces from './AdventurePlaces';
+import LocalSubmissions from './LocalSubmissions';
+import { getAnonId, generateShareUrl, processReferrer, getShareCount } from '@/lib/anonIdStorage';
 
 // 쿠팡 파트너스 재료 구매 링크
 const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
@@ -36,12 +39,13 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [weatherDesc, setWeatherDesc] = useState<string | null>(null);
   const [showLocalRestaurants, setShowLocalRestaurants] = useState(false);
   const [userLocation, setUserLocation] = useState<string | null>(null);
+  const [shareCount, setShareCount] = useState<number>(0);
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
   const getImagePath = (menuName: string) => encodeURI(`/food-images/${menuName}.jpg`);
 
-  // 날씨 정보 가져오기
+  // 날씨 정보 가져오기 + 익명 ID 초기화
   useEffect(() => {
     getCurrentWeather().then((w) => {
       if (w) {
@@ -50,6 +54,16 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       }
     });
     setUserLocation(getStoredLocation());
+    
+    // 익명 ID 초기화 및 referrer 처리
+    getAnonId();
+    processReferrer();
+    
+    // Share count 가져오기
+    getShareCount().then(count => {
+      setShareCount(count);
+      console.log('[ResultScreen] Share count:', count);
+    });
   }, []);
 
   // 룰렛 애니메이션 + 실제 결정(미리 계산 후 마지막에 확정)
@@ -126,7 +140,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const handleShare = async () => {
     if (!result?.menu) return;
 
-    const shareUrl = `${window.location.origin}?shared=${encodeURIComponent(result.menu)}`;
+    const shareUrl = generateShareUrl(); // ref 파라미터 포함
     const shareData = {
       title: '오늘 뭐 먹지?',
       text: `오늘 뭐 먹지에서 나온 내 메뉴 👉 ${result.menu} 🍽️\n\n${result.reason ?? ''}`.trim(),
@@ -141,6 +155,12 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         setShowShareSuccess(true);
         setTimeout(() => setShowShareSuccess(false), 2000);
       }
+      
+      // Share count 갱신 (약간의 딜레이 후)
+      setTimeout(async () => {
+        const count = await getShareCount();
+        setShareCount(count);
+      }, 1000);
     } catch {
       // 공유 취소/실패는 조용히 무시
     }
@@ -408,7 +428,20 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               >
                 🎲 다시 돌리기
               </button>
+            </div>
 
+            {/* 이색맛집 TOP5 섹션 */}
+            {result?.menu && userLocation && (
+              <AdventurePlaces
+                menuName={result.menu}
+                region={userLocation}
+                shareCount={shareCount}
+                onShareClick={handleShare}
+              />
+            )}
+
+            {/* 친구에게 공유하기 */}
+            <div className="mt-6">
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
                 <button
@@ -429,6 +462,9 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 ✅ 링크가 복사되었습니다!
               </div>
             )}
+
+            {/* 현지인맛집 제보하기 섹션 */}
+            <LocalSubmissions />
 
             <button
               onClick={onBackToHome}
