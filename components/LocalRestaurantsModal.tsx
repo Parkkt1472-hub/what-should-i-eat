@@ -36,10 +36,14 @@ export default function LocalRestaurantsModal({
     setError(null);
 
     try {
+      console.log('[LocalRestaurantsModal] Fetching with menuName:', menuName, 'location:', location);
+      
       const params = new URLSearchParams({ menu: menuName });
       if (location) {
         params.append('location', location);
       }
+
+      console.log('[LocalRestaurantsModal] API URL:', `/api/naver-local?${params.toString()}`);
 
       const response = await fetch(`/api/naver-local?${params.toString()}`);
 
@@ -48,6 +52,8 @@ export default function LocalRestaurantsModal({
       }
 
       const data = await response.json();
+      
+      console.log('[LocalRestaurantsModal] Received data:', data);
 
       if (data.error) {
         throw new Error(data.error);
