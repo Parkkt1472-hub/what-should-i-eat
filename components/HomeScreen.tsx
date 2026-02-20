@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { soundManager } from '@/lib/soundUtils';
+import { sfx } from '@/lib/sfx';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
 import StatsModal from './StatsModal';
@@ -53,7 +53,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
     }
 
     // 사운드 미리 로드
-    soundManager.preload();
+    sfx.init();
   }, []);
 
   useEffect(() => {
@@ -157,7 +157,18 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-400 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse-slow"></div>
           <button
             onClick={() => {
-              soundManager.play('click', { volume: 0.4 });
+              // 모바일 사운드 unlock (클릭 이벤트 내부에서 실행)
+              console.log('[HomeScreen] Unlocking audio...');
+              sfx.unlock();
+              // 클릭 사운드 재생
+              console.log('[HomeScreen] Playing click sound...');
+              const clickAudio = sfx.play('click', { volume: 0.4 });
+              if (clickAudio) {
+                console.log('[HomeScreen] Click sound started successfully');
+              } else {
+                console.warn('[HomeScreen] Click sound failed to start');
+              }
+              // 결정 시작
               onStartDecision();
             }}
             className="relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-bold py-8 px-12 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"

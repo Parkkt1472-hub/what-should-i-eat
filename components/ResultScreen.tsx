@@ -2,7 +2,7 @@
 
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { soundManager, vibrate } from '@/lib/soundUtils';
+import { sfx, vibrate } from '@/lib/sfx';
 import { getRandomMent } from '@/lib/randomMents';
 
 import { makeDecision } from '@/lib/decisionEngine';
@@ -84,7 +84,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     let spinAudio: HTMLAudioElement | null = null;
 
     let elapsed = 0;
-    const duration = 800 + Math.random() * 700; // 0.8~1.5초
+    const duration = 2500 + Math.random() * 1000; // 2.5~3.5초 (긴장감 강화)
 
     // 실제 추천 미리 계산 (이전 메뉴 제외도 반영)
     const decision = makeDecision(
@@ -95,13 +95,20 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       { mode }
     );
 
-    // Spin 사운드 재생 (2.5초 루프)
-    spinAudio = soundManager.play('spin', { volume: 0.4, loop: true });
+    // Spin 사운드 재생 (루프)
+    console.log('[Roulette] Starting spin sound...');
+    spinAudio = sfx.play('spin', { volume: 0.4, loop: true });
+    if (spinAudio) {
+      console.log('[Roulette] Spin sound started successfully');
+    } else {
+      console.warn('[Roulette] Spin sound failed to start');
+    }
 
-    // 2.5초 후 스핀 사운드 정지
+    // duration 시간 후 스핀 사운드 정지
     const spinStopTimer = setTimeout(() => {
-      soundManager.stop('spin');
-    }, 2500);
+      console.log('[Roulette] Stopping spin sound...');
+      sfx.stop('spin');
+    }, duration);
 
     intervalId = setInterval(() => {
       elapsed += 50;
@@ -119,7 +126,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       if (elapsed >= duration) {
         if (intervalId) clearInterval(intervalId);
         clearTimeout(spinStopTimer);
-        soundManager.stop('spin');
+        sfx.stop('spin');
 
         setIsRouletting(false);
         setShowAlmost(false);
@@ -130,7 +137,13 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         setRandomMent(getRandomMent());
 
         // 성공 사운드 + 진동
-        soundManager.play('success', { volume: 0.4 });
+        console.log('[Roulette] Playing success sound...');
+        const successAudio = sfx.play('success', { volume: 0.4 });
+        if (successAudio) {
+          console.log('[Roulette] Success sound started');
+        } else {
+          console.warn('[Roulette] Success sound failed');
+        }
         vibrate(50);
 
         // 통계 기록
@@ -165,7 +178,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     return () => {
       if (intervalId) clearInterval(intervalId);
       clearTimeout(spinStopTimer);
-      soundManager.stop('spin');
+      sfx.stop('spin');
     };
   }, [data, isRouletting, mode, previousMenu]);
 
@@ -425,29 +438,35 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               </div>
             )}
 
-            {/* Ingredients */}
-            {result.ingredients && result.ingredients.length > 0 && (
+            {/* Ingredients - 만들어먹기일 때 항상 표시 */}
+            {(result.how === '만들어 먹기' || (result.ingredients && result.ingredients.length > 0)) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-600 mb-3">필요한 재료</h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.ingredients.map((ingredient: string, index: number) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm border border-orange-100"
-                    >
-                      {ingredient}
-                    </span>
-                  ))}
-                </div>
+                {result.ingredients && result.ingredients.length > 0 && (
+                  <>
+                    <h3 className="text-sm font-semibold text-gray-600 mb-3">필요한 재료</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {result.ingredients.map((ingredient: string, index: number) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm border border-orange-100"
+                        >
+                          {ingredient}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
 
-                <a
-                  href={COUPANG_INGREDIENT_BUY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all"
-                >
-                  🛒 쿠팡에서 재료 구매하기
-                </a>
+                {result.how === '만들어 먹기' && (
+                  <a
+                    href={COUPANG_INGREDIENT_BUY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all"
+                  >
+                    🛒 쿠팡에서 재료 구매하기
+                  </a>
+                )}
               </div>
             )}
 
