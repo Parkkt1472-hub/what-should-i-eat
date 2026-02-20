@@ -266,40 +266,9 @@ function buildResult(
       },
     ];
   } else if (how === '외식') {
-    let searchQuery = '';
-    let actionLabel = '🗺️ 네이버지도에서 식당 찾기';
-    
-    if (outdoor === '근처에서 찾기') {
-      searchQuery = `${selectedMenu.name} 맛집`;
-      actionLabel = '📍 근처 맛집 찾기';
-    } else if (outdoor === '기분전환 야외') {
-      // 테마 키워드 랜덤 선택
-      const themeQueries = [
-        `${selectedMenu.name} 전망 좋은 식당`,
-        `${selectedMenu.name} 뷰 맛집`,
-        `${selectedMenu.name} 드라이브 맛집`,
-        `근교 드라이브 맛집`,
-        `바다뷰 맛집`,
-        `야경 맛집`,
-        `한옥 맛집`,
-        `루프탑 맛집`,
-        `데이트 코스 맛집`,
-      ];
-      searchQuery = getRandomItem(themeQueries);
-      actionLabel = '🌿 기분전환 맛집 찾기';
-    } else {
-      // Fallback: outdoor가 null이거나 예상 밖 값인 경우
-      searchQuery = `${selectedMenu.name} 맛집`;
-      actionLabel = '📍 근처 맛집 찾기';
-    }
-    
-    result.actions = [
-      {
-        type: 'restaurant',
-        label: actionLabel,
-        url: `https://map.naver.com/v5/search/${encodeURIComponent(searchQuery)}`,
-      },
-    ];
+    // 외식은 ResultScreen의 TOP5 모달로만 처리
+    // actions는 비워둠 (네이버 지도 바로 연결하지 않음)
+    result.actions = [];
   }
 
   return result;
