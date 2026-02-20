@@ -1,5 +1,6 @@
 import { menuDatabase, reasonTemplates, MenuItem, getDefaultMeta } from './menuData';
 import { getCurrentWeather, getWeatherMultiplier, type WeatherData } from './weatherService';
+import { getHistory } from './historyStorage';
 
 type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
@@ -51,6 +52,48 @@ export interface DecisionResult {
 
 function getRandomItem<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
+}
+
+// 최근 N개 히스토리에서 나온 메뉴 이름 가져오기
+function getRecentMenuNames(count: number = 5): string[] {
+  try {
+    const history = getHistory();
+    return history.slice(0, count).map(item => item.menuName);
+  } catch {
+    return [];
+  }
+}
+
+// 최근 메뉴를 제외한 다양한 메뉴 선택 (개선된 랜덤)
+function selectDiverseMenu(availableMenus: MenuItem[], excludeMenu?: string): MenuItem {
+  if (availableMenus.length === 0) {
+    throw new Error('No available menus');
+  }
+  
+  // 1. 명시적으로 제외할 메뉴 필터링
+  let filtered = excludeMenu 
+    ? availableMenus.filter(item => item.name !== excludeMenu)
+    : availableMenus;
+  
+  // 2. 최근 5개 히스토리 메뉴 제외 (다양성 확보)
+  const recentMenus = getRecentMenuNames(5);
+  if (recentMenus.length > 0) {
+    const withoutRecent = filtered.filter(item => !recentMenus.includes(item.name));
+    // 제외 후에도 충분한 선택지가 있으면 사용
+    if (withoutRecent.length >= Math.min(5, filtered.length * 0.3)) {
+      filtered = withoutRecent;
+    }
+  }
+  
+  // 3. Fisher-Yates shuffle로 랜덤 섞기 (더 나은 분포)
+  const shuffled = [...filtered];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  // 4. 섞인 배열의 첫 번째 항목 반환
+  return shuffled[0];
 }
 
 function filterMenuByContext(who: WhoType): MenuItem[] {
@@ -297,7 +340,7 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
   const topCandidates = scored.slice(0, topN).filter((c) => c.score > 0);
 
   if (topCandidates.length === 0) {
-    const selectedMenu = getRandomItem(availableMenus);
+    const selectedMenu = selectDiverseMenu(availableMenus, excludeMenu);
     return buildResult(who, input.how, input.outdoor, selectedMenu, generateReason(who, selectedMenu));
   }
 
@@ -319,12 +362,8 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
 
   let availableMenus = filterMenuByContext(who);
 
-  if (excludeMenu) {
-    const filteredMenus = availableMenus.filter((item) => item.name !== excludeMenu);
-    if (filteredMenus.length > 0) availableMenus = filteredMenus;
-  }
-
-  const selectedMenu = getRandomItem(availableMenus);
+  // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리
+  const selectedMenu = selectDiverseMenu(availableMenus, excludeMenu);
   const reason = generateReason(who, selectedMenu);
 
   return buildResult(who, how, outdoor, selectedMenu, reason);
