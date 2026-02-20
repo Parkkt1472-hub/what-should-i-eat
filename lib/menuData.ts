@@ -78,6 +78,7 @@ export interface MenuItem {
   spicyLevel: number; // 0-3
   difficulty?: string; // 쉬움, 보통, 어려움
   meta?: MenuMeta; // personalized 추천용 메타데이터
+  image?: string; // 이미지 경로
 }
 
 // 새 DB를 기존 형식으로 변환
@@ -89,7 +90,8 @@ function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
     spicyLevel: newMenu.spicy ? 2 : 0,
     ingredients: newMenu.ingredients,
     difficulty: '보통',
-    meta: undefined // 필요시 나중에 추가
+    meta: undefined, // 필요시 나중에 추가
+    image: newMenu.image // 이미지 경로 추가
   };
 }
 
