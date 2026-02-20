@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+// import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import { makeDecision } from '@/lib/decisionEngine';
@@ -43,7 +43,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
-  const getImagePath = (menuName: string) => encodeURI(`/food-images/${menuName}.jpg`);
+  // Get image from menuDatabase instead of constructing path
+  const getMenuImage = (menuName: string): string => {
+    const menuItem = menuDatabase.find((m: any) => m.name === menuName);
+    return menuItem?.image || '/menus/placeholder.jpg';
+  };
 
   // 날씨 정보 가져오기 + 익명 ID 초기화
   useEffect(() => {
@@ -283,13 +287,16 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
           {/* Food image */}
           <div className="relative w-full h-80 bg-gradient-to-br from-orange-100 to-amber-100">
             {!imageError ? (
-              <Image
-                src={getImagePath(result.menu)}
+              <img
+                src={getMenuImage(result.menu)}
                 alt={result.menu}
-                fill
-                className="object-cover"
-                priority
-                onError={() => setImageError(true)}
+                className="w-full h-full object-cover"
+                loading="eager"
+                onError={(e) => {
+                  console.error('[Image Error]', result.menu, e.currentTarget.src);
+                  e.currentTarget.src = '/menus/placeholder.jpg';
+                  setImageError(true);
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
