@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // 10분 캐시 저장소
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_VERSION = 'v2'; // 캐시 버전 (변경 시 기존 캐시 무효화)
+const CACHE_VERSION = 'v3'; // 캐시 버전 (변경 시 기존 캐시 무효화)
 
 // HTML 태그 제거 함수
 function stripHtmlTags(text: string): string {
@@ -161,10 +161,10 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    console.log('[naver-local API] After filtering:', filtered.length, 'items (need at least 3)');
+    console.log('[naver-local API] After filtering:', filtered.length, 'items (need at least 5)');
     
-    // 필터링 후 결과가 3개 미만이면 필터링 없이 반환 (폴백)
-    if (filtered.length < 3) {
+    // 필터링 후 결과가 5개 미만이면 필터링 없이 반환 (폴백)
+    if (filtered.length < 5) {
       console.log('[naver-local API] Too few results after filtering, using unfiltered results');
       filtered = data.items.filter((item: any) => 
         item.title && stripHtmlTags(item.title).trim()
