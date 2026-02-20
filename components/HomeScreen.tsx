@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
 import StatsModal from './StatsModal';
+import LocationInputModal from './LocationInputModal';
+import LocalRestaurantsModal from './LocalRestaurantsModal';
 import { PreferenceVector } from '@/lib/decisionEngine';
 import { loadPreferences, hasStoredPreferences } from '@/lib/preferenceStorage';
 import { getHistoryCount } from '@/lib/historyStorage';
 import { getStats } from '@/lib/statsStorage';
+import { getStoredLocation, saveLocation, hasStoredLocation } from '@/lib/locationStorage';
 
 interface HomeScreenProps {
   onStartDecision: () => void;
@@ -19,22 +22,33 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLocalRestaurantsModal, setShowLocalRestaurantsModal] = useState(false);
 
   const [hasPreferences, setHasPreferences] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
   const [statsCount, setStatsCount] = useState(0);
   const [topMenu, setTopMenu] = useState<{ menuName: string; count: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<string | null>(null);
 
   useEffect(() => {
     setHasPreferences(hasStoredPreferences());
     setHistoryCount(getHistoryCount());
     setStatsCount(getStats().totalDecisions);
+    setUserLocation(getStoredLocation());
     
     // Get top menu
     const { getTopMenus } = require('@/lib/statsStorage');
     const tops = getTopMenus(1);
     if (tops.length > 0) {
       setTopMenu(tops[0]);
+    }
+
+    // 첫 방문 시 지역 입력 모달 표시 (1초 후)
+    if (!hasStoredLocation()) {
+      setTimeout(() => {
+        setShowLocationModal(true);
+      }, 1000);
     }
   }, []);
 
@@ -64,6 +78,18 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
     onStartPersonalized(preferences);
   };
 
+  const handleLocationSubmit = (location: string) => {
+    saveLocation(location);
+    setUserLocation(location);
+    setShowLocationModal(false);
+  };
+
+  const handleTopMenuClick = () => {
+    if (topMenu) {
+      setShowLocalRestaurantsModal(true);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Animated background elements */}
@@ -87,22 +113,29 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           </p>
         </div>
 
-        {/* 🔥 오늘의 TOP 1 메뉴 배너 */}
+        {/* 🔥 오늘의 TOP 1 메뉴 배너 - 클릭 가능 */}
         {topMenu && (
-          <div className="relative group animate-fade-in">
+          <button
+            onClick={handleTopMenuClick}
+            className="relative group animate-fade-in w-full cursor-pointer"
+          >
             <div className="absolute -inset-1 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse-slow"></div>
-            <div className="relative bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-5 rounded-2xl shadow-xl">
+            <div className="relative bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-[1.02]">
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">🔥</span>
                 <div className="text-center">
                   <p className="text-sm font-semibold opacity-90">지금 가장 인기있는 메뉴</p>
                   <p className="text-2xl md:text-3xl font-bold">{topMenu.menuName}</p>
                   <p className="text-xs opacity-75 mt-1">{topMenu.count}명이 선택했어요!</p>
+                  <p className="text-xs opacity-90 mt-2 flex items-center justify-center gap-1">
+                    <span>🏪</span>
+                    <span>우리동네 맛집 보기</span>
+                  </p>
                 </div>
                 <span className="text-3xl">🔥</span>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         {/* Main CTA - 무작정 추천받기 */}
@@ -193,6 +226,23 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
 
       {/* Stats Modal */}
       <StatsModal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} />
+
+      {/* Location Input Modal */}
+      <LocationInputModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onSubmit={handleLocationSubmit}
+      />
+
+      {/* Local Restaurants Modal */}
+      {topMenu && (
+        <LocalRestaurantsModal
+          isOpen={showLocalRestaurantsModal}
+          onClose={() => setShowLocalRestaurantsModal(false)}
+          menuName={topMenu.menuName}
+          location={userLocation}
+        />
+      )}
 
       {/* Legal Disclaimer Modal */}
       {showDisclaimerModal && (
