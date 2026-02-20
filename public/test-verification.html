@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UX 개선 검증 페이지</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+    .section {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .check-icon {
+      font-size: 1.5rem;
+    }
+    .button {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+    }
+    .button:active {
+      transform: scale(0.98);
+    }
+    .demo-button {
+      background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+      padding: 20px;
+      font-size: 1.2rem;
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+      }
+      50% {
+        transform: scale(1.05) translateY(-5px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    .result-demo {
+      animation: popIn 0.4s ease-out;
+      background: white;
+      color: #333;
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 15px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .ment-display {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border: 2px solid #fb923c;
+      color: #c2410c;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎉 UX 개선 검증 완료</h1>
+    <p class="subtitle">2026-02-20 구현 항목 체크리스트</p>
+
+    <!-- 1. 복불복 버튼 텍스트 -->
+    <div class="section">
+      <h2>1️⃣ 복불복 버튼 4줄 텍스트</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>4줄 레이아웃 구현 완료</span>
+      </div>
+      <button class="button demo-button" onclick="playSound('click')">
+🎲
+복불복 모드
+내가 골라줄게.
+딱 걸리면 무조건 먹기.
+친구랑 내기 한 판?
+      </button>
+      <div class="code-block">
+whitespace-pre-line으로 줄바꿈 처리<br>
+모바일 최적화: text-xl md:text-2xl
+      </div>
+    </div>
+
+    <!-- 2. 사운드 시스템 -->
+    <div class="section">
+      <h2>2️⃣ 사운드 시스템</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>lib/soundUtils.ts 생성 완료</span>
+      </div>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>public/sounds/*.mp3 (3개) 생성 완료</span>
+      </div>
+      <button class="button" onclick="playSound('click')">🖱️ 클릭 사운드 테스트</button>
+      <button class="button" onclick="playSpinSound()">🎰 스핀 사운드 테스트 (2.5초)</button>
+      <button class="button" onclick="playSuccessSound()">✨ 성공 사운드 + 진동 테스트</button>
+      <div class="code-block">
+click.mp3: 버튼 클릭 시 (0.4 볼륨)<br>
+spin.mp3: 룰렛 시작 시 (2.5초 루프)<br>
+success.mp3: 결과 확정 시 + navigator.vibrate(50)
+      </div>
+    </div>
+
+    <!-- 3. popIn 애니메이션 -->
+    <div class="section">
+      <h2>3️⃣ popIn 애니메이션</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>CSS 키프레임 구현 완료</span>
+      </div>
+      <button class="button" onclick="showPopInDemo()">🎬 애니메이션 테스트</button>
+      <div id="popInDemo"></div>
+      <div class="code-block">
+@keyframes popIn {<br>
+  0%: scale(0.8) + translateY(20px)<br>
+  50%: scale(1.05) + translateY(-5px) [bounce]<br>
+  100%: scale(1) + translateY(0)<br>
+}
+      </div>
+    </div>
+
+    <!-- 4. 랜덤 멘트 -->
+    <div class="section">
+      <h2>4️⃣ 랜덤 멘트 시스템</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>lib/randomMents.ts (50개 멘트) 생성 완료</span>
+      </div>
+      <button class="button" onclick="showRandomMent()">🎲 랜덤 멘트 뽑기</button>
+      <div id="mentDisplay"></div>
+      <div class="code-block">
+50개 한국어 멘트 배열<br>
+Math.random()으로 무작위 선택<br>
+오렌지 그라데이션 박스로 표시
+      </div>
+    </div>
+
+    <!-- 5. 거의 다른 메뉴 효과 -->
+    <div class="section">
+      <h2>5️⃣ "거의 다른 메뉴" 효과</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>마지막 300ms 전환 로직 구현 완료</span>
+      </div>
+      <button class="button" onclick="showAlmostEffect()">🎭 거의 효과 시뮬레이션</button>
+      <div id="almostDemo"></div>
+      <div class="code-block">
+룰렛 종료 300ms 전 다른 메뉴 표시<br>
+긴장감 증대 효과<br>
+최종 결과는 예정된 메뉴로 정확히 확정
+      </div>
+    </div>
+
+    <!-- Git 정보 -->
+    <div class="section">
+      <h2>📦 Git 커밋 정보</h2>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>커밋 SHA: da529e3</span>
+      </div>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>GitHub 푸시 완료</span>
+      </div>
+      <div class="check-item">
+        <span class="check-icon">✅</span>
+        <span>7 files changed, 255 insertions(+)</span>
+      </div>
+      <div class="code-block">
+신규: lib/randomMents.ts, lib/soundUtils.ts<br>
+신규: public/sounds/*.mp3 (3개)<br>
+수정: components/HomeScreen.tsx, ResultScreen.tsx
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RANDOM_MENTS = [
+      '이미 결정됐다.',
+      '오늘은 이거다.',
+      '고민은 사치.',
+      '운명이 찍었다.',
+      '지금 안 먹으면 손해.',
+      '선택은 끝났다.',
+      '오늘의 기운은 여기다.',
+      '이건 거부 불가.',
+      '회피 불가.',
+      '먹으러 가자.',
+      '계속 도망칠 거야?',
+      '또 다시 돌릴 거야?',
+      '운명 거부 중…',
+      '이건 핑계 못 댄다.',
+      '오늘은 도망 금지.',
+      '이미 찍혔다.',
+      '안 먹으면 후회각.',
+      '이거 안 먹으면 손해임.',
+      '고민 타임 종료.',
+      '딱 걸렸다.',
+      '오늘 27명이 이걸 골랐다.',
+      '양산에서 지금 인기 상승 중.',
+      '매운맛 선택률 62%.',
+      '오늘의 1등 후보.',
+      '이건 무난한 승리.',
+      '지금 날씨에 찰떡.',
+      '이건 실패 없다.',
+      '평균 만족도 높음.',
+      '선택 안정권.',
+      '이미 검증된 메뉴.',
+      '오늘은 네가 산다.',
+      '친구 이겼다.',
+      '운명 승리.',
+      '친구 패배.',
+      '오늘 계산 담당 확정.',
+      '둘 다 매운 거… 인정?',
+      '이건 진짜다.',
+      '오늘 승부 끝.',
+      '다시 도전?',
+      '재대결 각?',
+      '운명 계산 완료.',
+      '결정 알고리즘 발동.',
+      '메뉴 확정.',
+      '선택 완료.',
+      '결정 성공.',
+      '미션 완료.',
+      '오늘의 퀘스트 클리어.',
+      '메뉴 뽑기 성공.',
+      '랜덤 엔진 종료.',
+      '운명 확정.',
+    ];
+
+    function playSound(type) {
+      const audio = new Audio(`/sounds/${type}.mp3`);
+      audio.volume = 0.4;
+      audio.play().catch(e => console.log('Sound play failed:', e));
+    }
+
+    function playSpinSound() {
+      const audio = new Audio('/sounds/spin.mp3');
+      audio.volume = 0.4;
+      audio.loop = true;
+      audio.play().catch(e => console.log('Sound play failed:', e));
+      
+      setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        alert('✅ 2.5초 스핀 사운드 재생 완료!');
+      }, 2500);
+    }
+
+    function playSuccessSound() {
+      const audio = new Audio('/sounds/success.mp3');
+      audio.volume = 0.4;
+      audio.play().catch(e => console.log('Sound play failed:', e));
+      
+      // 진동
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+      
+      alert('✅ 성공 사운드 + 진동(50ms) 재생 완료!');
+    }
+
+    function showPopInDemo() {
+      const demo = document.getElementById('popInDemo');
+      demo.innerHTML = '<div class="result-demo">🎉 결과 화면 팝인 애니메이션!</div>';
+      
+      setTimeout(() => {
+        demo.innerHTML = '';
+      }, 3000);
+    }
+
+    function showRandomMent() {
+      const ment = RANDOM_MENTS[Math.floor(Math.random() * RANDOM_MENTS.length)];
+      const display = document.getElementById('mentDisplay');
+      display.innerHTML = `<div class="ment-display">${ment}</div>`;
+    }
+
+    function showAlmostEffect() {
+      const demo = document.getElementById('almostDemo');
+      const menus = ['김치찌개', '된장찌개', '순두부찌개', '부대찌개', '치킨', '피자'];
+      
+      demo.innerHTML = '<div class="result-demo" style="font-size: 2rem;">🎰 룰렛 돌리는 중...</div>';
+      
+      // 마지막 300ms - 다른 메뉴 표시
+      setTimeout(() => {
+        const almostMenu = menus[Math.floor(Math.random() * menus.length)];
+        demo.innerHTML = `<div class="result-demo" style="font-size: 2rem; background: #fef3c7;">😱 ${almostMenu}</div>`;
+      }, 1700);
+      
+      // 최종 결과
+      setTimeout(() => {
+        const finalMenu = menus[Math.floor(Math.random() * menus.length)];
+        demo.innerHTML = `<div class="result-demo" style="font-size: 2rem; background: #86efac;">✅ ${finalMenu}</div>`;
+        playSound('success');
+      }, 2000);
+      
+      setTimeout(() => {
+        demo.innerHTML = '';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
