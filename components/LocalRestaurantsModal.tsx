@@ -6,7 +6,6 @@ interface LocalRestaurant {
   title: string;
   address: string;
   category: string;
-  link: string;
 }
 
 interface LocalRestaurantsModalProps {
@@ -121,39 +120,50 @@ export default function LocalRestaurantsModal({
 
           {!loading && !error && restaurants.length > 0 && (
             <div className="space-y-3">
-              {restaurants.map((restaurant, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.open(restaurant.link, '_blank', 'noopener,noreferrer');
-                  }}
-                  className="block w-full text-left p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-xl border border-orange-200 transition-all transform hover:scale-[1.02] hover:shadow-lg cursor-pointer"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-full flex items-center justify-center font-bold">
-                      {index + 1}
+              {restaurants.map((restaurant, index) => {
+                // 네이버 지도 검색 URL 생성 (가게명 기반)
+                const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(restaurant.title)}`;
+                
+                return (
+                  <div
+                    key={index}
+                    className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-full flex items-center justify-center font-bold">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-800 text-lg mb-1">
+                          {restaurant.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-1">{restaurant.address}</p>
+                        {restaurant.category && (
+                          <p className="text-xs text-orange-600 font-medium">
+                            {restaurant.category.split('>').pop()?.trim() || restaurant.category}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-800 text-lg mb-1 truncate">
-                        {restaurant.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-1">{restaurant.address}</p>
-                      {restaurant.category && (
-                        <p className="text-xs text-orange-600 font-medium">
-                          {restaurant.category.split('>').pop()?.trim() || restaurant.category}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex-shrink-0 text-orange-500">
+                    
+                    {/* 네이버 지도에서 보기 버튼 */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(naverMapUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-lg transition-all transform hover:scale-[1.02] hover:shadow-md flex items-center justify-center gap-2"
+                    >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                    </div>
+                      네이버지도에서 보기
+                    </button>
                   </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
