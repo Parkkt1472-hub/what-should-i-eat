@@ -36,10 +36,14 @@ export default function MoodPlacesModal({
     setError(null);
 
     try {
+      console.log('[MoodPlacesModal] Fetching with menuName:', menuName, 'location:', location);
+      
       const params = new URLSearchParams({ menu: menuName });
       if (location) {
         params.append('region', location);
       }
+
+      console.log('[MoodPlacesModal] API URL:', `/api/mood-places?${params.toString()}`);
 
       const response = await fetch(`/api/mood-places?${params.toString()}`);
 
@@ -48,6 +52,8 @@ export default function MoodPlacesModal({
       }
 
       const data = await response.json();
+      
+      console.log('[MoodPlacesModal] Received data:', data);
 
       if (data.error) {
         throw new Error(data.error);
