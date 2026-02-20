@@ -133,6 +133,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         setResult(decision);
         setPreviousMenu(decision.menu);
 
+        // 날씨 설명을 메뉴에 맞춰 업데이트
+        if (weather) {
+          setWeatherDesc(getWeatherDescription(weather, decision.menu));
+        }
+
         // 랜덤 멘트 선택
         setRandomMent(getRandomMent());
 
