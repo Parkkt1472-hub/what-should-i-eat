@@ -116,8 +116,24 @@ function generateReason(who: WhoType, menu: MenuItem): string {
       친구: 'friends',
     }[who] as keyof typeof reasonTemplates) ?? 'solo';
 
-  const templates = reasonTemplates[whoKey];
-  return getRandomItem(templates);
+  // 메뉴 특성 기반 추가 설명
+  const meta = menu.meta || getDefaultMeta(menu);
+  const extras: string[] = [];
+  
+  if (meta.spicy >= 2) extras.push('매콤한 맛이 일품');
+  if (meta.soup >= 2) extras.push('따뜻한 국물이 최고');
+  if (meta.meat >= 3) extras.push('고기가 가득');
+  if (meta.seafood >= 2) extras.push('신선한 해산물');
+  if (meta.veg >= 3) extras.push('채소 가득');
+  
+  const baseReason = getRandomItem(reasonTemplates[whoKey]);
+  
+  // 특성이 있으면 추가, 없으면 기본 문구만
+  if (extras.length > 0) {
+    return `${baseReason} (${extras.join(', ')})`;
+  }
+  
+  return baseReason;
 }
 
 // Score a menu based on preferences and weather

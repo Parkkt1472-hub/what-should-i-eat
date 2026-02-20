@@ -74,23 +74,31 @@ class SoundEffectManager {
 
       if (!audio) {
         audio = new Audio(this.soundPaths[key]);
+        audio.preload = 'auto';
         this.sounds.set(key, audio);
       }
 
+      // 오디오 설정
       audio.volume = options?.volume ?? 0.4;
       audio.loop = options?.loop ?? false;
       audio.currentTime = 0;
 
+      // 재생 시도
       const playPromise = audio.play();
       if (playPromise) {
-        playPromise.catch((err) => {
-          console.warn(`[SFX] Play failed for ${key}:`, err);
-        });
+        playPromise
+          .then(() => {
+            console.log(`[SFX] ✅ ${key} 재생 성공`);
+          })
+          .catch((err) => {
+            console.warn(`[SFX] ❌ ${key} 재생 실패:`, err.message);
+            console.warn('[SFX] 해결 방법: 사용자가 페이지를 먼저 클릭해야 합니다.');
+          });
       }
 
       return audio;
     } catch (error) {
-      console.warn(`[SFX] Error playing ${key}:`, error);
+      console.warn(`[SFX] ❌ ${key} 에러:`, error);
       return null;
     }
   }
