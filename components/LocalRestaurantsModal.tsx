@@ -122,12 +122,14 @@ export default function LocalRestaurantsModal({
           {!loading && !error && restaurants.length > 0 && (
             <div className="space-y-3">
               {restaurants.map((restaurant, index) => (
-                <a
+                <button
                   key={index}
-                  href={restaurant.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-xl border border-orange-200 transition-all transform hover:scale-[1.02] hover:shadow-lg"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(restaurant.link, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="block w-full text-left p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-xl border border-orange-200 transition-all transform hover:scale-[1.02] hover:shadow-lg cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-full flex items-center justify-center font-bold">
@@ -150,7 +152,7 @@ export default function LocalRestaurantsModal({
                       </svg>
                     </div>
                   </div>
-                </a>
+                </button>
               ))}
             </div>
           )}
