@@ -430,8 +430,8 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               </button>
             </div>
 
-            {/* 이색맛집 TOP5 섹션 */}
-            {result?.menu && userLocation && (
+            {/* 이색맛집 TOP5 섹션 - 외식하기 선택 시에만 표시 */}
+            {data?.how === '외식' && result?.menu && userLocation && (
               <AdventurePlaces
                 menuName={result.menu}
                 region={userLocation}
@@ -440,13 +440,14 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               />
             )}
 
-            {/* 친구에게 공유하기 */}
-            <div className="mt-6">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
-                <button
-                  onClick={handleShare}
-                  className="relative w-full py-4 px-6 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold hover:shadow-xl transition-all transform hover:scale-105"
+            {/* 친구에게 공유하기 - 외식하기 선택 시에만 표시 */}
+            {data?.how === '외식' && (
+              <div className="mt-6">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
+                  <button
+                    onClick={handleShare}
+                    className="relative w-full py-4 px-6 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold hover:shadow-xl transition-all transform hover:scale-105"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <span className="text-xl">📤</span>
@@ -455,16 +456,17 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                   </span>
                 </button>
               </div>
-            </div>
 
-            {showShareSuccess && (
-              <div className="mt-3 text-center text-sm text-green-600 font-medium animate-fade-in">
-                ✅ 링크가 복사되었습니다!
-              </div>
+              {showShareSuccess && (
+                <div className="mt-3 text-center text-sm text-green-600 font-medium animate-fade-in">
+                  ✅ 링크가 복사되었습니다!
+                </div>
+              )}
+            </div>
             )}
 
-            {/* 현지인맛집 제보하기 섹션 */}
-            <LocalSubmissions />
+            {/* 현지인맛집 제보하기 섹션 - 외식하기 선택 시에만 표시 */}
+            {data?.how === '외식' && <LocalSubmissions />}
 
             <button
               onClick={onBackToHome}
