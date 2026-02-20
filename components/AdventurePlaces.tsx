@@ -74,7 +74,7 @@ export default function AdventurePlaces({
           🎒 이색맛집 TOP5
         </h3>
         <p className="text-sm text-gray-600 mt-1">
-          (외곽지/특이한 음식 위주)
+          (평소에 잘 안먹는 특별한 음식)
         </p>
       </div>
 
