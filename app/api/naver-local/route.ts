@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // 10분 캐시 저장소
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_VERSION = 'v4'; // 캐시 버전 (변경 시 기존 캐시 무효화)
+const CACHE_VERSION = 'v5'; // 캐시 버전 (변경 시 기존 캐시 무효화)
 
 // HTML 태그 제거 함수
 function stripHtmlTags(text: string): string {
@@ -45,12 +45,23 @@ function shouldExcludeByCategory(category: string, mealTime: MealTime): boolean 
 function isInLocation(address: string, location: string | null): boolean {
   if (!location) return true; // 지역 지정 없으면 모두 통과
   
-  // 주소를 공백 제거하고 정규화
-  const normalizedAddress = address.replace(/\s+/g, '');
-  const normalizedLocation = location.replace(/\s+/g, '');
+  // 주소를 공백 제거하고 정규화 (대소문자 구분 없이)
+  const normalizedAddress = address.replace(/\s+/g, '').toLowerCase();
+  const normalizedLocation = location.replace(/\s+/g, '').toLowerCase();
   
   // 주소에 지역명이 포함되어 있는지 확인
-  return normalizedAddress.includes(normalizedLocation);
+  // 예: location="양산" → "경남양산시", "양산시", "양산군" 등 모두 허용
+  if (normalizedAddress.includes(normalizedLocation)) {
+    return true;
+  }
+  
+  // 특수 케이스: "시" 또는 "군" 추가해서 재검색
+  // 예: "양산" → "양산시" 또는 "양산군"도 허용
+  const locationWithSuffix = normalizedLocation + '시';
+  const locationWithGun = normalizedLocation + '군';
+  
+  return normalizedAddress.includes(locationWithSuffix) || 
+         normalizedAddress.includes(locationWithGun);
 }
 
 export async function GET(request: NextRequest) {
@@ -101,12 +112,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // display를 20으로 늘려서 필터링 후에도 충분한 결과 확보
+    // display를 30으로 늘려서 필터링 후에도 충분한 결과 확보
     const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(
       query
-    )}&display=20&sort=comment`;
+    )}&display=30&sort=comment`;
 
     console.log('[naver-local API] Calling Naver API with URL:', apiUrl);
+    console.log('[naver-local API] Location filter:', location || '(none)');
 
     const response = await fetch(apiUrl, {
       headers: {
@@ -130,7 +142,7 @@ export async function GET(request: NextRequest) {
         const fallbackQuery = location ? `${location} ${menu}` : menu;
         const fallbackUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(
           fallbackQuery
-        )}&display=20&sort=comment`;
+        )}&display=30&sort=comment`;
         
         const fallbackResponse = await fetch(fallbackUrl, {
           headers: {
@@ -169,9 +181,13 @@ export async function GET(request: NextRequest) {
       
       // 지역 검증 (주소 기반)
       const address = item.address || item.roadAddress || '';
-      if (!isInLocation(address, location)) {
-        console.log('[naver-local API] Excluded by location:', stripHtmlTags(item.title), '- address:', address);
+      const inLocation = isInLocation(address, location);
+      
+      if (!inLocation) {
+        console.log('[naver-local API] ❌ Excluded by location:', stripHtmlTags(item.title), '- address:', address, '- looking for:', location);
         return false;
+      } else {
+        console.log('[naver-local API] ✅ Included:', stripHtmlTags(item.title), '- address:', address);
       }
       
       // 카테고리 기반 필터링
