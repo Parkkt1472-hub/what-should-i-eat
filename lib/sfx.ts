@@ -1,0 +1,134 @@
+/**
+ * 사운드 이펙트 매니저 (모바일 unlock 패턴 포함)
+ * 
+ * 모바일(iOS Safari 포함)에서 사운드 재생이 차단되는 문제 해결:
+ * - 사용자 클릭 이벤트 내부에서 모든 오디오를 unlock 처리
+ * - unlock: volume=0으로 짧게 재생 후 즉시 정지
+ * - 이후 setTimeout 등 비동기 컨텍스트에서도 재생 가능
+ */
+
+type SoundKey = 'click' | 'spin' | 'success';
+
+class SoundEffectManager {
+  private sounds: Map<SoundKey, HTMLAudioElement> = new Map();
+  private unlocked = false;
+
+  private soundPaths: Record<SoundKey, string> = {
+    click: '/sounds/click.mp3',
+    spin: '/sounds/spin.mp3',
+    success: '/sounds/success.mp3',
+  };
+
+  /**
+   * 사운드 초기화 (프리로드)
+   */
+  init() {
+    if (typeof window === 'undefined') return;
+
+    Object.entries(this.soundPaths).forEach(([key, path]) => {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      this.sounds.set(key as SoundKey, audio);
+    });
+  }
+
+  /**
+   * 모바일 사운드 unlock
+   * 반드시 사용자 클릭 이벤트 핸들러 내부에서 호출해야 함
+   */
+  unlock() {
+    if (typeof window === 'undefined' || this.unlocked) return;
+
+    try {
+      // 모든 사운드를 volume=0으로 짧게 재생 후 즉시 정지
+      this.sounds.forEach((audio) => {
+        audio.volume = 0;
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise
+            .then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+            })
+            .catch((err) => {
+              console.warn('[SFX] Unlock failed:', err);
+            });
+        }
+      });
+
+      this.unlocked = true;
+      console.log('[SFX] Audio unlocked for mobile');
+    } catch (error) {
+      console.warn('[SFX] Unlock error:', error);
+    }
+  }
+
+  /**
+   * 사운드 재생
+   */
+  play(key: SoundKey, options?: { volume?: number; loop?: boolean }): HTMLAudioElement | null {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      let audio = this.sounds.get(key);
+
+      if (!audio) {
+        audio = new Audio(this.soundPaths[key]);
+        this.sounds.set(key, audio);
+      }
+
+      audio.volume = options?.volume ?? 0.4;
+      audio.loop = options?.loop ?? false;
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise) {
+        playPromise.catch((err) => {
+          console.warn(`[SFX] Play failed for ${key}:`, err);
+        });
+      }
+
+      return audio;
+    } catch (error) {
+      console.warn(`[SFX] Error playing ${key}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 특정 사운드 정지
+   */
+  stop(key: SoundKey) {
+    const audio = this.sounds.get(key);
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }
+
+  /**
+   * 모든 사운드 정지
+   */
+  stopAll() {
+    this.sounds.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  }
+}
+
+// 싱글톤 인스턴스
+export const sfx = new SoundEffectManager();
+
+/**
+ * 진동 피드백 (모바일 지원 시)
+ */
+export function vibrate(duration: number = 50) {
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(duration);
+    } catch (error) {
+      console.warn('[SFX] Vibrate failed:', error);
+    }
+  }
+}

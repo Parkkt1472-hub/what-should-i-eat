@@ -2,7 +2,7 @@
 
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { soundManager, vibrate } from '@/lib/soundUtils';
+import { sfx, vibrate } from '@/lib/sfx';
 import { getRandomMent } from '@/lib/randomMents';
 
 import { makeDecision } from '@/lib/decisionEngine';
@@ -96,11 +96,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     );
 
     // Spin 사운드 재생 (2.5초 루프)
-    spinAudio = soundManager.play('spin', { volume: 0.4, loop: true });
+    spinAudio = sfx.play('spin', { volume: 0.4, loop: true });
 
     // 2.5초 후 스핀 사운드 정지
     const spinStopTimer = setTimeout(() => {
-      soundManager.stop('spin');
+      sfx.stop('spin');
     }, 2500);
 
     intervalId = setInterval(() => {
@@ -119,7 +119,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       if (elapsed >= duration) {
         if (intervalId) clearInterval(intervalId);
         clearTimeout(spinStopTimer);
-        soundManager.stop('spin');
+        sfx.stop('spin');
 
         setIsRouletting(false);
         setShowAlmost(false);
@@ -130,7 +130,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         setRandomMent(getRandomMent());
 
         // 성공 사운드 + 진동
-        soundManager.play('success', { volume: 0.4 });
+        sfx.play('success', { volume: 0.4 });
         vibrate(50);
 
         // 통계 기록
@@ -165,7 +165,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     return () => {
       if (intervalId) clearInterval(intervalId);
       clearTimeout(spinStopTimer);
-      soundManager.stop('spin');
+      sfx.stop('spin');
     };
   }, [data, isRouletting, mode, previousMenu]);
 
