@@ -40,8 +40,8 @@ class SoundManager {
       volume?: number;
       loop?: boolean;
     }
-  ) {
-    if (typeof window === 'undefined') return;
+  ): HTMLAudioElement | null {
+    if (typeof window === 'undefined') return null;
 
     try {
       let audio = this.sounds.get(key);
