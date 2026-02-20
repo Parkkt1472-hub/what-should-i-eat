@@ -38,6 +38,8 @@ export interface DecisionResult {
   menu: string;
   reason: string;
   ingredients?: string[];
+  how?: HowType; // 추가: 어떻게 먹을지 정보
+  outdoor?: OutdoorType | null; // 추가: 외식 옵션 정보
   actions: {
     type: 'recipe' | 'youtube' | 'shopping' | 'delivery' | 'restaurant';
     label: string;
@@ -210,6 +212,8 @@ function buildResult(
   const result: DecisionResult = {
     menu: selectedMenu.name,
     reason,
+    how, // 추가
+    outdoor, // 추가
     actions: [],
   };
 

@@ -12,6 +12,7 @@ import { menuDatabase } from '@/lib/menuData';
 import { getCurrentWeather, getWeatherDescription, type WeatherData } from '@/lib/weatherService';
 import { getStoredLocation } from '@/lib/locationStorage';
 import LocalRestaurantsModal from './LocalRestaurantsModal';
+import MoodPlacesModal from './MoodPlacesModal';
 
 // 쿠팡 파트너스 재료 구매 링크
 const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
@@ -309,26 +310,48 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               <p className="text-xl text-gray-700 leading-relaxed">{result.reason}</p>
             </div>
 
-            {/* 우리동네 TOP5 섹션 */}
-            <div className="mb-6">
-              <button
-                onClick={() => setShowLocalRestaurants(true)}
-                className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-2 border-green-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-2xl">🏪</span>
-                  <div className="text-center">
-                    <p className="text-base font-bold text-green-800">
-                      우리동네 {result.menu} 맛집 TOP5
-                    </p>
-                    <p className="text-xs text-green-600 mt-1">
-                      {userLocation ? `${userLocation} 기준` : '가까운 곳 기준'} · 네이버 리뷰순
-                    </p>
-                  </div>
-                  <span className="text-2xl">🏪</span>
-                </div>
-              </button>
-            </div>
+            {/* 맛집 TOP5 섹션 - 외식일 때만 표시 */}
+            {result.how === '외식' && (
+              <div className="mb-6">
+                {result.outdoor === '기분전환 야외' ? (
+                  <button
+                    onClick={() => setShowLocalRestaurants(true)}
+                    className="w-full p-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-2 border-purple-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-2xl">🌿</span>
+                      <div className="text-center">
+                        <p className="text-base font-bold text-purple-800">
+                          기분전환 {result.menu} 맛집 TOP5
+                        </p>
+                        <p className="text-xs text-purple-600 mt-1">
+                          {userLocation ? `${userLocation} 근교 100km 반경` : '근교 지역'} · 네이버 리뷰순
+                        </p>
+                      </div>
+                      <span className="text-2xl">🌿</span>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowLocalRestaurants(true)}
+                    className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-2 border-green-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-2xl">🏪</span>
+                      <div className="text-center">
+                        <p className="text-base font-bold text-green-800">
+                          우리동네 {result.menu} 맛집 TOP5
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">
+                          {userLocation ? `${userLocation} 기준` : '가까운 곳 기준'} · 네이버 리뷰순
+                        </p>
+                      </div>
+                      <span className="text-2xl">🏪</span>
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Ingredients */}
             {result.ingredients && result.ingredients.length > 0 && (
@@ -473,12 +496,23 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
       {/* Local Restaurants Modal */}
       {result && (
-        <LocalRestaurantsModal
-          isOpen={showLocalRestaurants}
-          onClose={() => setShowLocalRestaurants(false)}
-          menuName={result.menu}
-          location={userLocation}
-        />
+        <>
+          {result.outdoor === '기분전환 야외' ? (
+            <MoodPlacesModal
+              isOpen={showLocalRestaurants}
+              onClose={() => setShowLocalRestaurants(false)}
+              menuName={result.menu}
+              location={userLocation}
+            />
+          ) : (
+            <LocalRestaurantsModal
+              isOpen={showLocalRestaurants}
+              onClose={() => setShowLocalRestaurants(false)}
+              menuName={result.menu}
+              location={userLocation}
+            />
+          )}
+        </>
       )}
     </div>
   );
