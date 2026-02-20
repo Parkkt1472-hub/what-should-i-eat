@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // 10분 캐시 저장소
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_VERSION = 'v6'; // 캐시 버전 (변경 시 기존 캐시 무효화)
+const CACHE_VERSION = 'v7'; // 캐시 버전 (변경 시 기존 캐시 무효화)
 
 // HTML 태그 제거 함수
 function stripHtmlTags(text: string): string {
@@ -42,19 +42,15 @@ function shouldExcludeByCategory(category: string, mealTime: MealTime): boolean 
 }
 
 // 지역 검증 함수 (주소에 location이 포함되어 있는지 확인)
-function isInLocation(address: string, location: string | null): boolean {
+function isInLocation(address: string, location: string | null, verbose: boolean = false): boolean {
   if (!location) return true; // 지역 지정 없으면 모두 통과
   
   // 주소를 공백 제거하고 정규화 (대소문자 구분 없이)
   const normalizedAddress = address.replace(/\s+/g, '').toLowerCase();
   const normalizedLocation = location.replace(/\s+/g, '').toLowerCase();
   
-  console.log(`[isInLocation] Checking: "${address}" contains "${location}"?`);
-  console.log(`  Normalized: "${normalizedAddress}" contains "${normalizedLocation}"?`);
-  
   // 1. 기본 매칭 (공백 제거)
   if (normalizedAddress.includes(normalizedLocation)) {
-    console.log(`  ✅ Match: basic inclusion`);
     return true;
   }
   
@@ -62,13 +58,7 @@ function isInLocation(address: string, location: string | null): boolean {
   const locationWithSi = normalizedLocation + '시';
   const locationWithGun = normalizedLocation + '군';
   
-  if (normalizedAddress.includes(locationWithSi)) {
-    console.log(`  ✅ Match: with 시 suffix`);
-    return true;
-  }
-  
-  if (normalizedAddress.includes(locationWithGun)) {
-    console.log(`  ✅ Match: with 군 suffix`);
+  if (normalizedAddress.includes(locationWithSi) || normalizedAddress.includes(locationWithGun)) {
     return true;
   }
   
@@ -80,12 +70,10 @@ function isInLocation(address: string, location: string | null): boolean {
     if (normalizedWord.includes(normalizedLocation) || 
         normalizedWord.includes(locationWithSi) ||
         normalizedWord.includes(locationWithGun)) {
-      console.log(`  ✅ Match: word-based (${word})`);
       return true;
     }
   }
   
-  console.log(`  ❌ No match`);
   return false;
 }
 
@@ -229,108 +217,64 @@ export async function GET(request: NextRequest) {
 
     // 필요한 필드만 추출 및 HTML 태그 제거
     // title이 없는 항목 제외
-    // 지역 필터링 추가
-    // 시간대별 카테고리 필터링 추가
-    let filtered = data.items.filter((item: any) => {
-      // title 없으면 제외
-      if (!item.title || !stripHtmlTags(item.title).trim()) {
-        return false;
-      }
-      
-      // 지역 검증 (주소 기반)
-      const address = item.address || item.roadAddress || '';
-      const inLocation = isInLocation(address, location);
-      
-      if (!inLocation) {
-        console.log('[naver-local API] ❌ Excluded by location:', stripHtmlTags(item.title), '- address:', address, '- looking for:', location);
-        return false;
-      } else {
-        console.log('[naver-local API] ✅ Included:', stripHtmlTags(item.title), '- address:', address);
-      }
-      
-      // 카테고리 기반 필터링
-      const category = item.category || '';
-      if (shouldExcludeByCategory(category, mealTime)) {
-        console.log('[naver-local API] Excluded by category:', stripHtmlTags(item.title), '- category:', category);
-        return false;
-      }
-      
-      return true;
-    });
+    let filtered = data.items.filter((item: any) => 
+      item.title && stripHtmlTags(item.title).trim()
+    );
 
-    console.log('[naver-local API] After filtering:', filtered.length, 'items (need at least 5)');
+    console.log('[naver-local API] Total items after basic filtering:', filtered.length);
     
-    // 필터링 후 결과가 5개 미만이면 카테고리 필터링만 제거 (지역 필터링은 유지)
-    if (filtered.length < 5) {
-      console.log('[naver-local API] ⚠️ Too few results after filtering, removing category filter but keeping location filter');
-      filtered = data.items.filter((item: any) => {
-        if (!item.title || !stripHtmlTags(item.title).trim()) {
-          return false;
-        }
-        
-        // 지역 검증은 계속 유지
+    // 지역 필터링 시도 (location이 있는 경우에만)
+    let locationFiltered = filtered;
+    if (location && filtered.length >= 5) {
+      locationFiltered = filtered.filter((item: any) => {
         const address = item.address || item.roadAddress || '';
         return isInLocation(address, location);
       });
       
-      console.log('[naver-local API] After location-only filtering:', filtered.length, 'items');
-    }
-    
-    // 여전히 부족하면 지역 필터링도 제거
-    if (filtered.length < 3) {
-      console.log('[naver-local API] ⚠️ Still too few results, removing ALL filters');
-      filtered = data.items.filter((item: any) => 
-        item.title && stripHtmlTags(item.title).trim()
-      );
-      console.log('[naver-local API] After removing all filters:', filtered.length, 'items');
-    }
-    
-    // 여전히 부족하면 display를 늘려서 재검색
-    if (filtered.length < 5 && data.items.length >= 20) {
-      console.log('[naver-local API] Still too few results, increasing display to 50');
-      const retryUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(
-        query
-      )}&display=50&sort=comment`;
+      console.log('[naver-local API] After location filtering:', locationFiltered.length, 'items');
       
-      const retryResponse = await fetch(retryUrl, {
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      });
-      
-      if (retryResponse.ok) {
-        const retryData = await retryResponse.json();
-        console.log('[naver-local API] Retry search returned', retryData.items?.length || 0, 'items');
-        
-        // 지역 필터링만 적용
-        filtered = (retryData.items || []).filter((item: any) => {
-          if (!item.title || !stripHtmlTags(item.title).trim()) {
-            return false;
-          }
-          
-          const address = item.address || item.roadAddress || '';
-          return isInLocation(address, location);
-        });
-        
-        console.log('[naver-local API] After retry location filtering:', filtered.length, 'items');
+      // 지역 필터링 후 결과가 5개 이상이면 사용
+      if (locationFiltered.length >= 5) {
+        filtered = locationFiltered;
+      } else {
+        console.log('[naver-local API] ⚠️ Location filtering removed too many results, ignoring location filter');
       }
     }
     
+    // 카테고리 필터링 시도
+    let categoryFiltered = filtered.filter((item: any) => {
+      const category = item.category || '';
+      return !shouldExcludeByCategory(category, mealTime);
+    });
+    
+    console.log('[naver-local API] After category filtering:', categoryFiltered.length, 'items');
+    
+    // 카테고리 필터링 후 결과가 5개 이상이면 사용
+    if (categoryFiltered.length >= 5) {
+      filtered = categoryFiltered;
+    } else {
+      console.log('[naver-local API] ⚠️ Category filtering removed too many results, ignoring category filter');
+    }
+
+    
+    const top5 = filtered.slice(0, 5);
+    
     const filteredData = {
-      items: filtered
-        .slice(0, 5) // 상위 5개만
-        .map((item: any) => ({
-          title: stripHtmlTags(item.title),
-          address: item.address || item.roadAddress || '',
-          category: item.category || '',
-        })),
+      items: top5.map((item: any) => ({
+        title: stripHtmlTags(item.title),
+        address: item.address || item.roadAddress || '',
+        category: item.category || '',
+      })),
     };
 
-    console.log('[naver-local API] Final result:', filteredData.items.length, 'items');
+    console.log('[naver-local API] ✅ Final result:', filteredData.items.length, 'items');
     if (filteredData.items.length > 0) {
-      console.log('[naver-local API] First item:', filteredData.items[0].title);
-    }
+      console.log('[naver-local API] TOP5 List:');
+      filteredData.items.forEach((item, idx) => {
+        console.log(`  ${idx + 1}. ${item.title} (${item.address})`);
+      });
+    } else {
+      console.error('[naver-local API] ❌ No results after all filtering!');
 
     // 10분 캐시 저장
     cache.set(cacheKey, {
