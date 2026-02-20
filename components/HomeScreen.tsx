@@ -156,18 +156,20 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-400 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse-slow"></div>
           <button
-            onClick={() => {
+            onClick={async () => {
               // 모바일 사운드 unlock (클릭 이벤트 내부에서 실행)
-              console.log('[HomeScreen] Unlocking audio...');
-              sfx.unlock();
+              console.log('[HomeScreen] 🔓 Unlocking audio...');
+              await sfx.unlock();
+              
               // 클릭 사운드 재생
-              console.log('[HomeScreen] Playing click sound...');
+              console.log('[HomeScreen] 🔊 Playing click sound...');
               const clickAudio = sfx.play('click', { volume: 0.4 });
               if (clickAudio) {
-                console.log('[HomeScreen] Click sound started successfully');
+                console.log('[HomeScreen] ✅ Click sound started');
               } else {
-                console.warn('[HomeScreen] Click sound failed to start');
+                console.warn('[HomeScreen] ❌ Click sound failed');
               }
+              
               // 결정 시작
               onStartDecision();
             }}

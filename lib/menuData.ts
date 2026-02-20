@@ -305,14 +305,33 @@ const detailedMenus: MenuItem[] = [
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
+  const menuName = item.name.toLowerCase();
+  const ingredientsText = (item.ingredients || []).join(' ').toLowerCase();
+  const fullText = `${menuName} ${ingredientsText}`;
+  
+  // 국물 메뉴 판단 (국, 탕, 찌개, 전골, 죽, 국수 등)
+  const isSoup = /국|탕|찌개|전골|죽|라면|우동|칼국수/.test(menuName);
+  
+  // 해산물 판단 - 메뉴 이름과 재료 모두에서 체크
+  const seafoodKeywords = ['꼬막', '전복', '장어', '오징어', '새우', '생선', '문어', '낙지', '조개', '굴', '게', '대게', '도다리', '매생이', '명란', '연어', '참치', '광어', '우럭', '숭어'];
+  const hasSeafood = seafoodKeywords.some(kw => fullText.includes(kw));
+  
+  // 고기 판단 - 메뉴 이름과 재료 모두에서 체크
+  const meatKeywords = ['고기', '삼겹살', '갈비', '불고기', '제육', '소고기', '돼지고기', '닭', '양고기', '육회', '스테이크', '치킨'];
+  const hasMeat = meatKeywords.some(kw => fullText.includes(kw));
+  
+  // 채소 판단
+  const vegKeywords = ['야채', '샐러드', '비빔', '나물', '시금치', '콩나물'];
+  const hasVeg = vegKeywords.some(kw => fullText.includes(kw));
+  
   return {
     spicy: item.spicyLevel || 0,
-    soup: item.category === '한식' ? 1 : 0,
-    rice: item.category === '한식' || item.category === '일식',
-    noodle: item.name.includes('면') || item.name.includes('파스타'),
-    meat: item.ingredients?.some(i => i.includes('고기') || i.includes('삼겹살') || i.includes('갈비')) ? 2 : 1,
-    seafood: item.ingredients?.some(i => i.includes('생선') || i.includes('새우')) ? 2 : 0,
-    veg: item.ingredients?.some(i => i.includes('야채') || i.includes('샐러드')) ? 2 : 1,
+    soup: isSoup ? 2 : 0,
+    rice: item.category === '한식' || item.category === '일식' || /밥|덮밥|비빔/.test(menuName),
+    noodle: /면|파스타|우동|라면|국수/.test(menuName),
+    meat: hasMeat ? 2 : 0,
+    seafood: hasSeafood ? 2 : 0,
+    veg: hasVeg ? 2 : 1,
     time: 1,
     budget: 1,
     tags: [item.category]

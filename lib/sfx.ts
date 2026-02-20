@@ -36,30 +36,34 @@ class SoundEffectManager {
    * 모바일 사운드 unlock
    * 반드시 사용자 클릭 이벤트 핸들러 내부에서 호출해야 함
    */
-  unlock() {
+  async unlock() {
     if (typeof window === 'undefined' || this.unlocked) return;
 
+    console.log('[SFX] 🔓 Unlocking audio for mobile...');
+
     try {
-      // 모든 사운드를 volume=0으로 짧게 재생 후 즉시 정지
-      this.sounds.forEach((audio) => {
-        audio.volume = 0;
-        const playPromise = audio.play();
-        if (playPromise) {
-          playPromise
-            .then(() => {
-              audio.pause();
-              audio.currentTime = 0;
-            })
-            .catch((err) => {
-              console.warn('[SFX] Unlock failed:', err);
-            });
+      // 각 사운드를 순차적으로 unlock
+      for (const [key, audio] of this.sounds.entries()) {
+        try {
+          audio.volume = 0.01; // 거의 무음
+          audio.muted = false;
+          
+          await audio.play();
+          console.log(`[SFX] ✅ ${key} unlocked`);
+          
+          // 즉시 정지
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = 0.4; // 기본 볼륨으로 복구
+        } catch (err) {
+          console.warn(`[SFX] ⚠️ ${key} unlock failed:`, err);
         }
-      });
+      }
 
       this.unlocked = true;
-      console.log('[SFX] Audio unlocked for mobile');
+      console.log('[SFX] ✅ All audio unlocked successfully!');
     } catch (error) {
-      console.warn('[SFX] Unlock error:', error);
+      console.error('[SFX] ❌ Unlock critical error:', error);
     }
   }
 
