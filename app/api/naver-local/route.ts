@@ -110,7 +110,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     console.log('[naver-local API] Naver API returned', data.items?.length || 0, 'items');
-    console.log('[naver-local API] First item:', data.items?.[0]);
+    if (data.items && data.items.length > 0) {
+      console.log('[naver-local API] Sample items with categories:');
+      data.items.slice(0, 3).forEach((item: any, idx: number) => {
+        console.log(`  ${idx + 1}. ${stripHtmlTags(item.title)} - category: "${item.category}"`);
+      });
+    }
 
     // 필요한 필드만 추출 및 HTML 태그 제거
     // title이 없는 항목 제외
