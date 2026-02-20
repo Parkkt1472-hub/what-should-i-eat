@@ -26,14 +26,18 @@ export default function AdventurePlaces({
   onShareClick,
 }: AdventurePlacesProps) {
   const [places, setPlaces] = useState<AdventurePlace[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false); // 펼침/접힘 상태
   
   const isUnlocked = shareCount >= 3;
 
   useEffect(() => {
-    fetchAdventurePlaces();
-  }, [menuName, region]);
+    // 자동 로딩 제거 - 클릭 시에만 로딩
+    if (isExpanded && places.length === 0) {
+      fetchAdventurePlaces();
+    }
+  }, [isExpanded, menuName, region]);
 
   const fetchAdventurePlaces = async () => {
     setLoading(true);
@@ -66,38 +70,48 @@ export default function AdventurePlaces({
     window.open(naverMapUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-      {/* Header */}
-      <div className="text-center mb-4">
+      {/* Header - 클릭 가능 */}
+      <button 
+        onClick={handleToggle}
+        className="w-full text-center mb-4 hover:opacity-80 transition-opacity"
+      >
         <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          🎒 이색맛집 TOP5
+          🎒 이색맛집 TOP5 {isExpanded ? '▼' : '▶'}
         </h3>
         <p className="text-sm text-gray-600 mt-1">
           (평소에 잘 안먹는 특별한 음식)
         </p>
-      </div>
+      </button>
 
-      {loading && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
-          <p className="mt-2 text-sm text-gray-600">이색맛집을 찾는 중...</p>
-        </div>
-      )}
+      {/* 펼쳐진 경우에만 내용 표시 */}
+      {isExpanded && (
+        <>
+          {loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+              <p className="mt-2 text-sm text-gray-600">이색맛집을 찾는 중...</p>
+            </div>
+          )}
 
-      {error && (
-        <div className="text-center py-6 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+          {error && (
+            <div className="text-center py-6 text-sm text-red-600">
+              {error}
+            </div>
+          )}
 
-      {!loading && !error && places.length === 0 && (
-        <div className="text-center py-6 text-sm text-gray-600">
-          이색맛집을 찾지 못했어요 😢
-        </div>
-      )}
+          {!loading && !error && places.length === 0 && (
+            <div className="text-center py-6 text-sm text-gray-600">
+              이색맛집을 찾지 못했어요 😢
+            </div>
+          )}
 
-      {!loading && !error && places.length > 0 && (
+          {!loading && !error && places.length > 0 && (
         <>
           {/* Lock Status */}
           {!isUnlocked && (
@@ -213,6 +227,8 @@ export default function AdventurePlaces({
               </p>
             </div>
           )}
+          </>
+        )}
         </>
       )}
     </div>
