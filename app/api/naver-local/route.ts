@@ -105,10 +105,43 @@ export async function GET(request: NextRequest) {
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return NextResponse.json(
-      { error: 'Naver API credentials not configured' },
-      { status: 500 }
-    );
+    console.error('[naver-local API] ❌ Naver API credentials not configured!');
+    console.error('[naver-local API] Please set NAVER_CLIENT_ID and NAVER_CLIENT_SECRET in .env.local');
+    console.error('[naver-local API] Visit https://developers.naver.com to get API keys');
+    
+    // 임시 목 데이터 반환 (개발용)
+    const mockData = {
+      items: [
+        {
+          title: `${location || ''} ${menu} 맛집 1`,
+          address: `${location || '서울'} 테스트 주소 1`,
+          category: '음식점>한식',
+        },
+        {
+          title: `${location || ''} ${menu} 맛집 2`,
+          address: `${location || '서울'} 테스트 주소 2`,
+          category: '음식점>한식',
+        },
+        {
+          title: `${location || ''} ${menu} 맛집 3`,
+          address: `${location || '서울'} 테스트 주소 3`,
+          category: '음식점>한식',
+        },
+        {
+          title: `${location || ''} ${menu} 맛집 4`,
+          address: `${location || '서울'} 테스트 주소 4`,
+          category: '음식점>한식',
+        },
+        {
+          title: `${location || ''} ${menu} 맛집 5`,
+          address: `${location || '서울'} 테스트 주소 5`,
+          category: '음식점>한식',
+        },
+      ],
+    };
+    
+    console.warn('[naver-local API] 🔧 Returning MOCK data (API keys not configured)');
+    return NextResponse.json(mockData);
   }
 
   try {
