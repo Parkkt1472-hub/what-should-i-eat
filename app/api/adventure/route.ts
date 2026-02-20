@@ -9,18 +9,18 @@ function stripHtmlTags(text: string): string {
   return text.replace(/<\/?b>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 }
 
-// 이색맛집 검색 키워드
+// 이색맛집 검색 키워드 (외곽지, 특이한 음식 위주)
 const ADVENTURE_KEYWORDS = [
-  '외곽',
-  '산속',
-  '드라이브',
-  '시골',
-  '숨은',
-  '정통',
-  '전문점',
-  '현지식',
-  '해외요리',
-  '이색',
+  '숨은맛집',
+  '현지맛집',
+  '시골맛집',
+  '산속맛집',
+  '외곽맛집',
+  '드라이브맛집',
+  '이색요리',
+  '특이한',
+  '전통요리',
+  '희귀한',
 ];
 
 // 체인점 키워드 (제외 대상)
@@ -54,39 +54,53 @@ function calculateAdventureScore(item: any, keyword: string): number {
   const title = item.title || '';
   const address = item.address || '';
   const category = item.category || '';
+  const text = `${title} ${address} ${category}`.toLowerCase();
   
-  // 기본 점수: 키워드 매칭
-  if (keyword === '정통' || keyword === '전문점') {
-    score += 10;
-  } else if (keyword === '외곽' || keyword === '산속' || keyword === '시골') {
-    score += 15;
-  } else if (keyword === '이색' || keyword === '해외요리') {
+  // 기본 점수: 키워드 매칭 (외곽/특이한 음식 위주)
+  if (keyword === '숨은맛집' || keyword === '현지맛집') {
     score += 12;
+  } else if (keyword === '산속맛집' || keyword === '시골맛집' || keyword === '외곽맛집') {
+    score += 18; // 외곽지 높은 점수
+  } else if (keyword === '이색요리' || keyword === '특이한' || keyword === '희귀한') {
+    score += 15; // 특이한 음식 높은 점수
   } else {
-    score += 8;
+    score += 10;
   }
   
-  // 체인점은 제외
+  // 체인점은 완전 제외
   if (isChainStore(title, address)) {
     return -100;
   }
   
-  // 지점 패턴은 감점
+  // 지점 패턴은 큰 감점
   if (hasBranchPattern(title)) {
-    score -= 5;
+    score -= 8;
   }
   
   // 광고성 키워드 감점
-  const text = `${title} ${address} ${category}`.toLowerCase();
   AD_KEYWORDS.forEach(adKeyword => {
     if (text.includes(adKeyword)) {
       score -= 3;
     }
   });
   
-  // 카테고리 가산점
-  if (category.includes('전문') || category.includes('정통')) {
-    score += 3;
+  // 외곽/산속/시골 위치 가산점
+  if (text.includes('산') || text.includes('시골') || text.includes('외곽') || 
+      text.includes('드라이브') || text.includes('교외')) {
+    score += 5;
+  }
+  
+  // 특이한 음식 카테고리 가산점
+  if (category.includes('퓨전') || category.includes('이색') || 
+      category.includes('향토') || category.includes('토속') ||
+      category.includes('전통')) {
+    score += 4;
+  }
+  
+  // 일반적인 카테고리는 감점
+  if (category.includes('한식>찌개') || category.includes('한식>백반') ||
+      category.includes('중식>짜장면') || category.includes('패스트푸드')) {
+    score -= 3;
   }
   
   return score;
