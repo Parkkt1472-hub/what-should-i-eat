@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // display를 10으로 늘려서 필터링 후에도 충분한 결과 확보
+    // display를 20으로 늘려서 필터링 후에도 충분한 결과 확보
     const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(
       query
-    )}&display=10&sort=comment`;
+    )}&display=20&sort=comment`;
 
     console.log('[naver-local API] Calling Naver API with URL:', apiUrl);
 
@@ -110,9 +110,34 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     console.log('[naver-local API] Naver API returned', data.items?.length || 0, 'items');
+    
+    // 결과가 없으면 시간대 키워드 없이 재검색
+    if (!data.items || data.items.length === 0) {
+      if (mealKeyword) {
+        console.log('[naver-local API] No results with meal keyword, retrying without it...');
+        const fallbackQuery = location ? `${location} ${menu}` : menu;
+        const fallbackUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(
+          fallbackQuery
+        )}&display=20&sort=comment`;
+        
+        const fallbackResponse = await fetch(fallbackUrl, {
+          headers: {
+            'X-Naver-Client-Id': clientId,
+            'X-Naver-Client-Secret': clientSecret,
+          },
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          data.items = fallbackData.items || [];
+          console.log('[naver-local API] Fallback search returned', data.items.length, 'items');
+        }
+      }
+    }
+    
     if (data.items && data.items.length > 0) {
       console.log('[naver-local API] Sample items with categories:');
-      data.items.slice(0, 3).forEach((item: any, idx: number) => {
+      data.items.slice(0, 5).forEach((item: any, idx: number) => {
         console.log(`  ${idx + 1}. ${stripHtmlTags(item.title)} - category: "${item.category}"`);
       });
     }
@@ -120,24 +145,35 @@ export async function GET(request: NextRequest) {
     // 필요한 필드만 추출 및 HTML 태그 제거
     // title이 없는 항목 제외
     // 시간대별 카테고리 필터링 추가
+    let filtered = data.items.filter((item: any) => {
+      // title 없으면 제외
+      if (!item.title || !stripHtmlTags(item.title).trim()) {
+        return false;
+      }
+      
+      // 카테고리 기반 필터링
+      const category = item.category || '';
+      if (shouldExcludeByCategory(category, mealTime)) {
+        console.log('[naver-local API] Excluded by category:', stripHtmlTags(item.title), '- category:', category);
+        return false;
+      }
+      
+      return true;
+    });
+
+    console.log('[naver-local API] After filtering:', filtered.length, 'items (need at least 3)');
+    
+    // 필터링 후 결과가 3개 미만이면 필터링 없이 반환 (폴백)
+    if (filtered.length < 3) {
+      console.log('[naver-local API] Too few results after filtering, using unfiltered results');
+      filtered = data.items.filter((item: any) => 
+        item.title && stripHtmlTags(item.title).trim()
+      );
+    }
+    
     const filteredData = {
-      items: data.items
-        .filter((item: any) => {
-          // title 없으면 제외
-          if (!item.title || !stripHtmlTags(item.title).trim()) {
-            return false;
-          }
-          
-          // 카테고리 기반 필터링
-          const category = item.category || '';
-          if (shouldExcludeByCategory(category, mealTime)) {
-            console.log('[naver-local API] Excluded by category:', stripHtmlTags(item.title), '- category:', category);
-            return false;
-          }
-          
-          return true;
-        })
-        .slice(0, 5) // 필터링 후 상위 5개만
+      items: filtered
+        .slice(0, 5) // 상위 5개만
         .map((item: any) => ({
           title: stripHtmlTags(item.title),
           address: item.address || item.roadAddress || '',
@@ -145,8 +181,10 @@ export async function GET(request: NextRequest) {
         })),
     };
 
-    console.log('[naver-local API] Filtered data:', filteredData.items.length, 'items');
-    console.log('[naver-local API] First filtered item:', filteredData.items[0]);
+    console.log('[naver-local API] Final result:', filteredData.items.length, 'items');
+    if (filteredData.items.length > 0) {
+      console.log('[naver-local API] First item:', filteredData.items[0].title);
+    }
 
     // 10분 캐시 저장
     cache.set(cacheKey, {
