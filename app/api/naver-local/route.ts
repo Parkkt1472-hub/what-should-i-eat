@@ -58,15 +58,15 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     // 필요한 필드만 추출 및 HTML 태그 제거
+    // title이 없는 항목 제외
     const filteredData = {
-      items: data.items.map((item: any) => ({
-        title: stripHtmlTags(item.title),
-        address: item.address || item.roadAddress || '',
-        category: item.category || '',
-        link: item.link || '',
-        mapx: item.mapx,
-        mapy: item.mapy,
-      })),
+      items: data.items
+        .filter((item: any) => item.title && stripHtmlTags(item.title).trim())
+        .map((item: any) => ({
+          title: stripHtmlTags(item.title),
+          address: item.address || item.roadAddress || '',
+          category: item.category || '',
+        })),
     };
 
     // 10분 캐시 저장
