@@ -2,7 +2,7 @@
 
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { sfx, vibrate } from '@/lib/sfx';
+import { audioManager, triggerVibration } from '@/lib/audioManager';
 import { getRandomMent } from '@/lib/randomMents';
 
 import { makeDecision } from '@/lib/decisionEngine';
@@ -95,19 +95,23 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       { mode }
     );
 
-    // Spin 사운드 재생 (루프)
-    console.log('[Roulette] Starting spin sound...');
-    spinAudio = sfx.play('spin', { volume: 0.4, loop: true });
-    if (spinAudio) {
-      console.log('[Roulette] Spin sound started successfully');
-    } else {
-      console.warn('[Roulette] Spin sound failed to start');
-    }
+    // 🎵 Spin 사운드 재생 (루프) - await로 확실하게!
+    console.log('[Roulette] 🔊 Starting spin sound...');
+    audioManager.play('spin', { volume: 0.5, loop: true }).then((audio) => {
+      spinAudio = audio;
+      if (audio) {
+        console.log('[Roulette] ✅ Spin sound playing!');
+      } else {
+        console.error('[Roulette] ❌ Spin sound FAILED!');
+      }
+    }).catch((err) => {
+      console.error('[Roulette] 💥 Spin sound error:', err);
+    });
 
     // duration 시간 후 스핀 사운드 정지
     const spinStopTimer = setTimeout(() => {
-      console.log('[Roulette] Stopping spin sound...');
-      sfx.stop('spin');
+      console.log('[Roulette] ⏹️ Stopping spin sound...');
+      audioManager.stop('spin');
     }, duration);
 
     intervalId = setInterval(() => {
@@ -126,7 +130,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       if (elapsed >= duration) {
         if (intervalId) clearInterval(intervalId);
         clearTimeout(spinStopTimer);
-        sfx.stop('spin');
+        audioManager.stop('spin');
 
         setIsRouletting(false);
         setShowAlmost(false);
@@ -141,15 +145,16 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         // 랜덤 멘트 선택
         setRandomMent(getRandomMent());
 
-        // 성공 사운드 + 진동
-        console.log('[Roulette] Playing success sound...');
-        const successAudio = sfx.play('success', { volume: 0.4 });
-        if (successAudio) {
-          console.log('[Roulette] Success sound started');
-        } else {
-          console.warn('[Roulette] Success sound failed');
-        }
-        vibrate(50);
+        // 🎉 성공 사운드 + 진동
+        console.log('[Roulette] 🔊 Playing success sound...');
+        audioManager.play('success', { volume: 0.5 }).then((audio) => {
+          if (audio) {
+            console.log('[Roulette] ✅ Success sound playing!');
+          } else {
+            console.error('[Roulette] ❌ Success sound FAILED!');
+          }
+        });
+        triggerVibration(50);
 
         // 통계 기록
         const menuItem: any = menuDatabase.find((m: any) => m.name === decision.menu);
@@ -183,7 +188,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
     return () => {
       if (intervalId) clearInterval(intervalId);
       clearTimeout(spinStopTimer);
-      sfx.stop('spin');
+      audioManager.stop('spin');
     };
   }, [data, isRouletting, mode, previousMenu]);
 

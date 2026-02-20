@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔊 사운드 테스트</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .test-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      margin: 20px 0;
+      backdrop-filter: blur(10px);
+    }
+    button {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: transform 0.2s;
+      font-weight: bold;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid #4ade80;
+    }
+    .log-error {
+      border-left-color: #f87171;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    .status {
+      text-align: center;
+      font-size: 1.2em;
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔊 사운드 시스템 테스트</h1>
+  <div class="status" id="status">준비 중...</div>
+
+  <div class="test-section">
+    <h2>1️⃣ 사운드 Unlock</h2>
+    <p>먼저 클릭하여 모바일 오디오를 활성화하세요:</p>
+    <button onclick="unlockAudio()">🔓 오디오 Unlock</button>
+  </div>
+
+  <div class="test-section">
+    <h2>2️⃣ 개별 사운드 테스트</h2>
+    <button onclick="testSound('click')">🖱️ Click</button>
+    <button onclick="testSound('spin')">🎰 Spin</button>
+    <button onclick="testSound('success')">🎉 Success</button>
+  </div>
+
+  <div class="test-section">
+    <h2>3️⃣ 룰렛 시뮬레이션</h2>
+    <p>실제 복불복 룰렛과 동일한 사운드 재생:</p>
+    <button onclick="simulateRoulette()">🎲 룰렛 시작</button>
+    <button onclick="stopAll()">⏹️ 모두 정지</button>
+  </div>
+
+  <div class="test-section">
+    <h2>📋 로그</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const audioElements = new Map();
+    const soundFiles = {
+      click: '/sounds/click.mp3',
+      spin: '/sounds/spin.mp3',
+      success: '/sounds/success.mp3'
+    };
+    let isUnlocked = false;
+    let spinAudio = null;
+
+    // 로그 출력
+    function addLog(message, isError = false) {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = isError ? 'log-entry log-error' : 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.insertBefore(entry, logDiv.firstChild);
+    }
+
+    // 상태 업데이트
+    function updateStatus(message) {
+      document.getElementById('status').textContent = message;
+    }
+
+    // 초기화
+    function initialize() {
+      addLog('🎵 사운드 시스템 초기화 시작...');
+      Object.entries(soundFiles).forEach(([key, path]) => {
+        const audio = new Audio(path);
+        audio.preload = 'auto';
+        audioElements.set(key, audio);
+        addLog(`✅ ${key} 로드 완료`);
+      });
+      updateStatus('✅ 초기화 완료 - Unlock 버튼을 클릭하세요');
+    }
+
+    // Unlock
+    async function unlockAudio() {
+      addLog('🔓 오디오 Unlock 시작...');
+      
+      for (const [key, audio] of audioElements.entries()) {
+        try {
+          audio.volume = 0.01;
+          audio.muted = false;
+          await audio.play();
+          addLog(`✅ ${key} unlock 성공`);
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = 0.5;
+        } catch (error) {
+          addLog(`❌ ${key} unlock 실패: ${error.message}`, true);
+        }
+      }
+      
+      isUnlocked = true;
+      updateStatus('🎉 Unlock 완료! 이제 사운드를 테스트하세요');
+      addLog('🎉 모든 오디오 Unlock 완료!');
+    }
+
+    // 개별 사운드 테스트
+    async function testSound(key) {
+      if (!isUnlocked) {
+        alert('먼저 Unlock 버튼을 클릭하세요!');
+        return;
+      }
+
+      addLog(`🔊 ${key} 재생 시작...`);
+      const audio = audioElements.get(key);
+      
+      try {
+        audio.currentTime = 0;
+        audio.loop = false;
+        await audio.play();
+        addLog(`✅ ${key} 재생 성공!`);
+        updateStatus(`🔊 ${key} 재생 중...`);
+      } catch (error) {
+        addLog(`❌ ${key} 재생 실패: ${error.message}`, true);
+        updateStatus(`❌ ${key} 재생 실패`);
+      }
+    }
+
+    // 룰렛 시뮬레이션
+    async function simulateRoulette() {
+      if (!isUnlocked) {
+        alert('먼저 Unlock 버튼을 클릭하세요!');
+        return;
+      }
+
+      addLog('🎲 룰렛 시뮬레이션 시작!');
+      
+      // Click 사운드
+      await testSound('click');
+      
+      // 0.3초 후 Spin 사운드 (루프)
+      setTimeout(async () => {
+        addLog('🎰 Spin 사운드 루프 시작...');
+        spinAudio = audioElements.get('spin');
+        spinAudio.loop = true;
+        spinAudio.volume = 0.5;
+        spinAudio.currentTime = 0;
+        
+        try {
+          await spinAudio.play();
+          addLog('✅ Spin 루프 재생 중!');
+          updateStatus('🎰 룰렛 회전 중... (3초)');
+        } catch (error) {
+          addLog(`❌ Spin 재생 실패: ${error.message}`, true);
+        }
+        
+        // 3초 후 정지하고 Success 사운드
+        setTimeout(() => {
+          spinAudio.pause();
+          spinAudio.currentTime = 0;
+          addLog('⏹️ Spin 정지');
+          
+          // Success 사운드
+          setTimeout(async () => {
+            await testSound('success');
+            updateStatus('🎉 룰렛 완료!');
+            addLog('🎉 룰렛 시뮬레이션 완료!');
+          }, 100);
+        }, 3000);
+      }, 300);
+    }
+
+    // 모두 정지
+    function stopAll() {
+      audioElements.forEach((audio, key) => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      addLog('⏹️ 모든 사운드 정지');
+      updateStatus('⏹️ 정지됨');
+    }
+
+    // 페이지 로드 시 초기화
+    window.onload = initialize;
+  </script>
+</body>
+</html>
