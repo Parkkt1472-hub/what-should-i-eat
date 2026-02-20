@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 확인</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .item { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .item img { width: 100%; height: 100px; object-fit: cover; }
+        .missing { border-color: red; background: #fee; }
+        .loaded { border-color: green; }
+        .name { font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>메뉴 이미지 로딩 테스트 (95개)</h1>
+    <div id="stats"></div>
+    <div class="grid" id="grid"></div>
+    
+    <script>
+        const images = [
+            "kimchi-jjigae", "doenjang-jjigae", "sundubu-jjigae", "budae-jjigae",
+            "dakdoritang", "gamjatang", "ppyeo-haejangguk", "haejangguk",
+            "galbitang", "seolleongtang", "gomtang", "samgyetang",
+            "gopchang-jeongol", "sundae-jeongol", "doejigukbap", "sundae-gukbap",
+            "kongnamul-gukbap", "gul-gukbap", "chueotang", "yukgaejang",
+            "jjimdak", "haemul-jjim", "agu-jjim", "dak-hanmari", "galbi-jjim",
+            "kalguksu", "haemul-kalguksu", "janchi-guksu", "manduguk", "naengmyeon",
+            "bibim-naengmyeon", "mulhoe", "milmyeon",
+            "samgyeopsal", "galbi-gui", "bulgogi", "jeyuk-bokkeum",
+            "ojingeo-bokkeum", "nakji-bokkeum", "dakgalbi", "galchijorim",
+            "godeungeo-gui", "jogi-gui", "daegu-tang", "mulmegi-tang",
+            "bibimbap", "dolsot-bibimbap", "kimchi-bokkeumbap", "jeyuk-deopbap",
+            "bulgogi-deopbap", "kkomak-bibimbap",
+            "bossam", "jokbal", "altang", "baechu-kimchi-jjigae", "bokkeumbap",
+            "daege", "dodari-ssukguk", "eomuk", "gamja-ongsimi", "ganjjajang",
+            "gogi-guksu", "gul-jjim", "gyudon", "hwangtae-haejangguk",
+            "jangeo-deopbap", "king-crab", "kkotgetang", "maesaengi-guk",
+            "mapadubu", "ojingeo-deopbap", "okdom-gui", "salad", "sandwich",
+            "seongge-miyeokguk", "ssal-guksu", "steak", "sundae", "twigim",
+            "yangnyeom-gejang", "yukgaejang-deopbap",
+            "tteokbokki", "gimbap", "ramyeon", "chikin",
+            "jjajangmyeon", "jjamppong", "tangsuyuk",
+            "chobap", "udon", "ramen", "donkaseu",
+            "pizza", "pasta", "hamburger",
+            "jeonbok-juk", "jang-gejang"
+        ];
+        
+        let loaded = 0, failed = 0;
+        
+        images.forEach(id => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<img src="/menus/${id}.jpg" /><div class="name">${id}</div>`;
+            
+            const img = div.querySelector('img');
+            img.onload = () => {
+                div.classList.add('loaded');
+                loaded++;
+                updateStats();
+            };
+            img.onerror = () => {
+                div.classList.add('missing');
+                failed++;
+                updateStats();
+            };
+            
+            document.getElementById('grid').appendChild(div);
+        });
+        
+        function updateStats() {
+            document.getElementById('stats').innerHTML = 
+                `<p><strong>로딩 완료:</strong> ${loaded} / <strong>실패:</strong> ${failed} / <strong>전체:</strong> ${images.length}</p>`;
+        }
+    </script>
+</body>
+</html>
