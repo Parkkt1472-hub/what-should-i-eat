@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { soundManager } from '@/lib/soundUtils';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
 import StatsModal from './StatsModal';
@@ -50,6 +51,9 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         setShowLocationModal(true);
       }, 1000);
     }
+
+    // 사운드 미리 로드
+    soundManager.preload();
   }, []);
 
   useEffect(() => {
@@ -152,14 +156,18 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-400 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse-slow"></div>
           <button
-            onClick={onStartDecision}
-            className="relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white text-2xl md:text-3xl font-bold py-8 px-16 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
+            onClick={() => {
+              soundManager.play('click', { volume: 0.4 });
+              onStartDecision();
+            }}
+            className="relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-bold py-8 px-12 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
           >
-            <span className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
               <span className="text-3xl">🎲</span>
-              <span>무작정 추천받기</span>
-              <span className="text-3xl">✨</span>
-            </span>
+              <span className="text-xl md:text-2xl leading-tight whitespace-pre-line text-center">
+                {"복불복 모드\n내가 골라줄게.\n딱 걸리면 무조건 먹기.\n친구랑 내기 한 판?"}
+              </span>
+            </div>
           </button>
         </div>
 

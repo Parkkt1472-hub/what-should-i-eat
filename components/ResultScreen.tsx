@@ -2,6 +2,8 @@
 
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { soundManager, vibrate } from '@/lib/soundUtils';
+import { getRandomMent } from '@/lib/randomMents';
 
 import { makeDecision } from '@/lib/decisionEngine';
 import { incrementUsage } from '@/lib/usageLimit';
@@ -40,6 +42,9 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [showLocalRestaurants, setShowLocalRestaurants] = useState(false);
   const [userLocation, setUserLocation] = useState<string | null>(null);
   const [shareCount, setShareCount] = useState<number>(0);
+  const [randomMent, setRandomMent] = useState<string>('');
+  const [almostMenu, setAlmostMenu] = useState<string>('');
+  const [showAlmost, setShowAlmost] = useState(false);
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
@@ -76,6 +81,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
     const candidateMenus = menuDatabase.map((m: any) => m.name);
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let spinAudio: HTMLAudioElement | null = null;
 
     let elapsed = 0;
     const duration = 800 + Math.random() * 700; // 0.8~1.5초
@@ -89,15 +95,43 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       { mode }
     );
 
+    // Spin 사운드 재생 (2.5초 루프)
+    spinAudio = soundManager.play('spin', { volume: 0.4, loop: true });
+
+    // 2.5초 후 스핀 사운드 정지
+    const spinStopTimer = setTimeout(() => {
+      soundManager.stop('spin');
+    }, 2500);
+
     intervalId = setInterval(() => {
       elapsed += 50;
 
+      // "거의 다른 메뉴" 효과 (마지막 300ms)
+      if (elapsed >= duration - 300 && elapsed < duration && !showAlmost) {
+        setShowAlmost(true);
+        // 실제 결과와 다른 랜덤 메뉴 표시
+        const differentMenus = candidateMenus.filter((m: string) => m !== decision.menu);
+        const almost = differentMenus[Math.floor(Math.random() * differentMenus.length)];
+        setAlmostMenu(almost);
+        setRouletteMenu(almost);
+      }
+
       if (elapsed >= duration) {
         if (intervalId) clearInterval(intervalId);
+        clearTimeout(spinStopTimer);
+        soundManager.stop('spin');
 
         setIsRouletting(false);
+        setShowAlmost(false);
         setResult(decision);
         setPreviousMenu(decision.menu);
+
+        // 랜덤 멘트 선택
+        setRandomMent(getRandomMent());
+
+        // 성공 사운드 + 진동
+        soundManager.play('success', { volume: 0.4 });
+        vibrate(50);
 
         // 통계 기록
         const menuItem: any = menuDatabase.find((m: any) => m.name === decision.menu);
@@ -121,7 +155,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         } else {
           setMatchScore(0);
         }
-      } else {
+      } else if (!showAlmost) {
         // 룰렛 동안 랜덤 메뉴 표시
         const randomMenu = candidateMenus[Math.floor(Math.random() * candidateMenus.length)];
         setRouletteMenu(randomMenu);
@@ -130,6 +164,8 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      clearTimeout(spinStopTimer);
+      soundManager.stop('spin');
     };
   }, [data, isRouletting, mode, previousMenu]);
 
@@ -283,7 +319,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       </div>
 
       <div className="w-full max-w-2xl relative z-10">
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-orange-100 animate-scale-in">
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-orange-100 result">
           {/* Food image */}
           <div className="relative w-full h-80 bg-gradient-to-br from-orange-100 to-amber-100">
             {!imageError ? (
@@ -328,6 +364,15 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 <p className="text-base text-blue-800 font-medium flex items-center gap-2">
                   <span>🌡️</span>
                   <span>{weatherDesc}</span>
+                </p>
+              </div>
+            )}
+
+            {/* \ub79c\ub364 \uba58\ud2b8 */}
+            {randomMent && (
+              <div className="mb-4 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4">
+                <p className="text-lg font-bold text-orange-700 text-center">
+                  {randomMent}
                 </p>
               </div>
             )}
@@ -536,6 +581,22 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         }
         .animate-scale-in {
           animation: scale-in 0.5s ease-out;
+        }
+        @keyframes popIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+          }
+          50% {
+            transform: scale(1.05) translateY(-5px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .result {
+          animation: popIn 0.4s ease-out;
         }
       `}</style>
 
