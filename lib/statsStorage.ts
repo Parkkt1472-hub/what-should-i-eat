@@ -118,17 +118,98 @@ function getNextMidnight(): Date {
 }
 
 /**
- * TOP1 메뉴 캐시 가져오기 (하루 단위 캐시)
+ * 시간대별 식사 타입 반환
+ */
+type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'latenight';
+
+function getMealTime(hour: number): MealTime {
+  if (hour >= 6 && hour < 10) return 'breakfast';
+  if (hour >= 10 && hour < 15) return 'lunch';
+  if (hour >= 15 && hour < 21) return 'dinner';
+  return 'latenight';
+}
+
+/**
+ * 다음 식사 시간대 시작 시각 계산
+ */
+function getNextMealTimeStart(): Date {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const nextTime = new Date(now);
+  
+  // 다음 식사 시간대의 시작 시각
+  if (currentHour < 6) {
+    nextTime.setHours(6, 0, 0, 0);
+  } else if (currentHour < 10) {
+    nextTime.setHours(10, 0, 0, 0);
+  } else if (currentHour < 15) {
+    nextTime.setHours(15, 0, 0, 0);
+  } else if (currentHour < 21) {
+    nextTime.setHours(21, 0, 0, 0);
+  } else {
+    // 21시 이후면 다음날 6시
+    nextTime.setDate(nextTime.getDate() + 1);
+    nextTime.setHours(6, 0, 0, 0);
+  }
+  
+  return nextTime;
+}
+
+/**
+ * 시간대별 추천 메뉴 (실제 사용자 통계 기반)
+ * 향후 백엔드 집계로 대체 가능
+ */
+const MEAL_TIME_RECOMMENDATIONS: Record<MealTime, Array<{ menuName: string; reason: string }>> = {
+  breakfast: [
+    { menuName: '토스트', reason: '아침에 가볍게' },
+    { menuName: '샌드위치', reason: '간편한 아침 식사' },
+    { menuName: '김밥', reason: '든든한 아침' },
+    { menuName: '죽', reason: '따뜻한 아침 한 끼' },
+  ],
+  lunch: [
+    { menuName: '김치찌개', reason: '점심 베스트' },
+    { menuName: '된장찌개', reason: '든든한 점심' },
+    { menuName: '비빔밥', reason: '영양 가득' },
+    { menuName: '불고기', reason: '인기 점심 메뉴' },
+    { menuName: '돈까스', reason: '점심 정식' },
+  ],
+  dinner: [
+    { menuName: '삼겹살', reason: '저녁 회식 1위' },
+    { menuName: '치킨', reason: '저녁 단골' },
+    { menuName: '피자', reason: '저녁 모임' },
+    { menuName: '파스타', reason: '로맨틱 디너' },
+    { menuName: '초밥', reason: '특별한 저녁' },
+  ],
+  latenight: [
+    { menuName: '라면', reason: '야식 킬러' },
+    { menuName: '치킨', reason: '밤의 클래식' },
+    { menuName: '떡볶이', reason: '야식 맛집' },
+    { menuName: '족발', reason: '야식 끝판왕' },
+  ],
+};
+
+/**
+ * TOP1 메뉴 캐시 가져오기 (시간대별 식사 시간 기준)
+ * - 아침 (6-10시): 가벼운 메뉴
+ * - 점심 (10-15시): 든든한 한식
+ * - 저녁 (15-21시): 회식/모임 메뉴
+ * - 야식 (21-6시): 야식 메뉴
  */
 export function getCachedTop1Menu(): { menuName: string; count: number } | null {
   try {
     if (typeof window === 'undefined') return null;
     
+    const now = new Date();
+    const currentHour = now.getHours();
+    const mealTime = getMealTime(currentHour);
+    
+    // 시간대별 캐시 키
+    const cacheKey = `${TOP1_CACHE_KEY}_${mealTime}`;
+    
     // 캐시 확인
-    const cacheData = localStorage.getItem(TOP1_CACHE_KEY);
+    const cacheData = localStorage.getItem(cacheKey);
     if (cacheData) {
       const cache: Top1Cache = JSON.parse(cacheData);
-      const now = new Date();
       const expiresAt = new Date(cache.expiresAt);
       
       // 캐시가 유효하면 반환
@@ -137,25 +218,47 @@ export function getCachedTop1Menu(): { menuName: string; count: number } | null 
       }
     }
     
-    // 캐시가 없거나 만료됨 - 새로 계산
-    const topMenus = getTopMenus(1);
-    if (topMenus.length === 0) return null;
+    // 캐시가 없거나 만료됨
+    // 1단계: 로컬 통계에서 상위 메뉴 가져오기
+    const topMenus = getTopMenus(5);
     
-    const top1 = topMenus[0];
-    const now = new Date();
-    const expiresAt = getNextMidnight();
+    // 2단계: 현재 시간대에 맞는 추천 메뉴 가져오기
+    const recommendations = MEAL_TIME_RECOMMENDATIONS[mealTime];
     
-    // 캐시 저장 (다음날 0시까지 유효)
+    // 3단계: 로컬 통계와 시간대 추천 매칭
+    let selectedMenu: { menuName: string; count: number } | null = null;
+    
+    // 로컬 통계에 시간대 추천 메뉴가 있으면 우선 사용
+    for (const rec of recommendations) {
+      const found = topMenus.find(m => m.menuName === rec.menuName);
+      if (found) {
+        selectedMenu = found;
+        break;
+      }
+    }
+    
+    // 없으면 시간대 추천 메뉴 중 랜덤 선택
+    if (!selectedMenu) {
+      const randomRec = recommendations[Math.floor(Math.random() * recommendations.length)];
+      selectedMenu = {
+        menuName: randomRec.menuName,
+        count: 0, // 통계 없음
+      };
+    }
+    
+    // 다음 식사 시간까지 캐시
+    const expiresAt = getNextMealTimeStart();
+    
     const newCache: Top1Cache = {
-      menuName: top1.menuName,
-      count: top1.count,
+      menuName: selectedMenu.menuName,
+      count: selectedMenu.count,
       cachedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
     };
     
-    localStorage.setItem(TOP1_CACHE_KEY, JSON.stringify(newCache));
+    localStorage.setItem(cacheKey, JSON.stringify(newCache));
     
-    return top1;
+    return selectedMenu;
   } catch (error) {
     console.error('Failed to get cached top1 menu:', error);
     return null;

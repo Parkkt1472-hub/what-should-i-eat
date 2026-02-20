@@ -124,9 +124,19 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">🔥</span>
                 <div className="text-center">
-                  <p className="text-sm font-semibold opacity-90">지금 가장 인기있는 메뉴</p>
+                  <p className="text-sm font-semibold opacity-90">
+                    {(() => {
+                      const hour = new Date().getHours();
+                      if (hour >= 6 && hour < 10) return '아침 시간 인기 메뉴';
+                      if (hour >= 10 && hour < 15) return '점심 시간 인기 메뉴';
+                      if (hour >= 15 && hour < 21) return '저녁 시간 인기 메뉴';
+                      return '야식 시간 인기 메뉴';
+                    })()}
+                  </p>
                   <p className="text-2xl md:text-3xl font-bold">{topMenu.menuName}</p>
-                  <p className="text-xs opacity-75 mt-1">{topMenu.count}명이 선택했어요!</p>
+                  <p className="text-xs opacity-75 mt-1">
+                    {topMenu.count > 0 ? `${topMenu.count}명이 선택했어요!` : '지금 시간대 추천!'}
+                  </p>
                   <p className="text-xs opacity-90 mt-2 flex items-center justify-center gap-1">
                     <span>🏪</span>
                     <span>우리동네 맛집 보기</span>
