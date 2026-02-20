@@ -10,6 +10,8 @@ import { addToHistory } from '@/lib/historyStorage';
 import { recordDecision } from '@/lib/statsStorage';
 import { menuDatabase } from '@/lib/menuData';
 import { getCurrentWeather, getWeatherDescription, type WeatherData } from '@/lib/weatherService';
+import { getStoredLocation } from '@/lib/locationStorage';
+import LocalRestaurantsModal from './LocalRestaurantsModal';
 
 // 쿠팡 파트너스 재료 구매 링크
 const COUPANG_INGREDIENT_BUY_URL = 'https://link.coupang.com/a/dOo6AY';
@@ -31,6 +33,8 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherDesc, setWeatherDesc] = useState<string | null>(null);
+  const [showLocalRestaurants, setShowLocalRestaurants] = useState(false);
+  const [userLocation, setUserLocation] = useState<string | null>(null);
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
@@ -44,6 +48,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
         setWeatherDesc(getWeatherDescription(w));
       }
     });
+    setUserLocation(getStoredLocation());
   }, []);
 
   // 룰렛 애니메이션 + 실제 결정(미리 계산 후 마지막에 확정)
@@ -304,6 +309,27 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               <p className="text-xl text-gray-700 leading-relaxed">{result.reason}</p>
             </div>
 
+            {/* 우리동네 TOP5 섹션 */}
+            <div className="mb-6">
+              <button
+                onClick={() => setShowLocalRestaurants(true)}
+                className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-2 border-green-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-2xl">🏪</span>
+                  <div className="text-center">
+                    <p className="text-base font-bold text-green-800">
+                      우리동네 {result.menu} 맛집 TOP5
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {userLocation ? `${userLocation} 기준` : '가까운 곳 기준'} · 네이버 리뷰순
+                    </p>
+                  </div>
+                  <span className="text-2xl">🏪</span>
+                </div>
+              </button>
+            </div>
+
             {/* Ingredients */}
             {result.ingredients && result.ingredients.length > 0 && (
               <div className="mb-6">
@@ -444,6 +470,16 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
           animation: scale-in 0.5s ease-out;
         }
       `}</style>
+
+      {/* Local Restaurants Modal */}
+      {result && (
+        <LocalRestaurantsModal
+          isOpen={showLocalRestaurants}
+          onClose={() => setShowLocalRestaurants(false)}
+          menuName={result.menu}
+          location={userLocation}
+        />
+      )}
     </div>
   );
 }
