@@ -158,9 +158,16 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           <button
             onClick={() => {
               // 모바일 사운드 unlock (클릭 이벤트 내부에서 실행)
+              console.log('[HomeScreen] Unlocking audio...');
               sfx.unlock();
               // 클릭 사운드 재생
-              sfx.play('click', { volume: 0.4 });
+              console.log('[HomeScreen] Playing click sound...');
+              const clickAudio = sfx.play('click', { volume: 0.4 });
+              if (clickAudio) {
+                console.log('[HomeScreen] Click sound started successfully');
+              } else {
+                console.warn('[HomeScreen] Click sound failed to start');
+              }
               // 결정 시작
               onStartDecision();
             }}
