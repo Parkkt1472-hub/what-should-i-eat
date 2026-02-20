@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // 10분 캐시 저장소
 const cache = new Map<string, { data: any; expiry: number }>();
+const CACHE_VERSION = 'v2'; // 캐시 버전 (변경 시 기존 캐시 무효화)
 
 // HTML 태그 제거 함수
 function stripHtmlTags(text: string): string {
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
     query = `${query} ${mealKeyword}`;
   }
   
-  const cacheKey = `${location || 'default'}:${menu}:${mealTime}`;
+  const cacheKey = `${CACHE_VERSION}:${location || 'default'}:${menu}:${mealTime}`;
 
   console.log('[naver-local API] Meal time:', mealTime);
   console.log('[naver-local API] Search query:', query);
