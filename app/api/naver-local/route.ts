@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
   const menu = searchParams.get('menu');
   const location = searchParams.get('location');
 
+  console.log('[naver-local API] Received request - menu:', menu, 'location:', location);
+
   if (!menu) {
     return NextResponse.json({ error: 'menu parameter is required' }, { status: 400 });
   }
@@ -20,6 +22,9 @@ export async function GET(request: NextRequest) {
   // 지역이 없으면 메뉴만 검색
   const query = location ? `${location} ${menu}` : menu;
   const cacheKey = `${location || 'default'}:${menu}`;
+
+  console.log('[naver-local API] Search query:', query);
+  console.log('[naver-local API] Cache key:', cacheKey);
 
   // 캐시 확인
   const cached = cache.get(cacheKey);
@@ -44,6 +49,8 @@ export async function GET(request: NextRequest) {
       query
     )}&display=5&sort=comment`;
 
+    console.log('[naver-local API] Calling Naver API with URL:', apiUrl);
+
     const response = await fetch(apiUrl, {
       headers: {
         'X-Naver-Client-Id': clientId,
@@ -57,6 +64,9 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
+    console.log('[naver-local API] Naver API returned', data.items?.length || 0, 'items');
+    console.log('[naver-local API] First item:', data.items?.[0]);
+
     // 필요한 필드만 추출 및 HTML 태그 제거
     // title이 없는 항목 제외
     const filteredData = {
@@ -68,6 +78,9 @@ export async function GET(request: NextRequest) {
           category: item.category || '',
         })),
     };
+
+    console.log('[naver-local API] Filtered data:', filteredData.items.length, 'items');
+    console.log('[naver-local API] First filtered item:', filteredData.items[0]);
 
     // 10분 캐시 저장
     cache.set(cacheKey, {

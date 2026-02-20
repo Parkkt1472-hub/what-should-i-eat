@@ -4,12 +4,20 @@
  */
 
 const STORAGE_KEY = 'wsei_stats_v1';
+const TOP1_CACHE_KEY = 'wsei_top1_cache_v1';
 
 export interface Stats {
   totalDecisions: number;
   menuCount: { [menuName: string]: number };
   spicyPreferenceCount: { 0: number; 1: number; 2: number; 3: number };
   lastUpdated: string;
+}
+
+export interface Top1Cache {
+  menuName: string;
+  count: number;
+  cachedAt: string; // ISO date
+  expiresAt: string; // ISO date (다음날 0시)
 }
 
 /**
@@ -95,6 +103,62 @@ export function getTopMenus(limit: number = 5): Array<{ menuName: string; count:
   } catch (error) {
     console.error('Failed to get top menus:', error);
     return [];
+  }
+}
+
+/**
+ * 다음날 0시 계산
+ */
+function getNextMidnight(): Date {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow;
+}
+
+/**
+ * TOP1 메뉴 캐시 가져오기 (하루 단위 캐시)
+ */
+export function getCachedTop1Menu(): { menuName: string; count: number } | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    
+    // 캐시 확인
+    const cacheData = localStorage.getItem(TOP1_CACHE_KEY);
+    if (cacheData) {
+      const cache: Top1Cache = JSON.parse(cacheData);
+      const now = new Date();
+      const expiresAt = new Date(cache.expiresAt);
+      
+      // 캐시가 유효하면 반환
+      if (now < expiresAt) {
+        return { menuName: cache.menuName, count: cache.count };
+      }
+    }
+    
+    // 캐시가 없거나 만료됨 - 새로 계산
+    const topMenus = getTopMenus(1);
+    if (topMenus.length === 0) return null;
+    
+    const top1 = topMenus[0];
+    const now = new Date();
+    const expiresAt = getNextMidnight();
+    
+    // 캐시 저장 (다음날 0시까지 유효)
+    const newCache: Top1Cache = {
+      menuName: top1.menuName,
+      count: top1.count,
+      cachedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+    
+    localStorage.setItem(TOP1_CACHE_KEY, JSON.stringify(newCache));
+    
+    return top1;
+  } catch (error) {
+    console.error('Failed to get cached top1 menu:', error);
+    return null;
   }
 }
 
