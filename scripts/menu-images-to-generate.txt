@@ -1,0 +1,84 @@
+samgyetang|Samgyetang - Korean ginseng chicken soup, whole young chicken stuffed with rice, ginseng, jujube, garlic. Top-down view, steaming.
+gopchang-jeongol|Gopchang jeongol - Korean beef intestine hot pot, spicy red broth, vegetables, noodles. Top-down view, bubbling.
+sundae-jeongol|Sundae jeongol - Korean blood sausage hot pot, spicy broth, vegetables, tofu. Top-down view, steaming.
+doejigukbap|Doejigukbap - Korean pork soup with rice, milky broth, tender pork slices, rice bowl. Top-down view.
+sundae-gukbap|Sundae gukbap - Korean blood sausage soup with rice, milky broth, sundae slices, rice. Top-down view.
+kongnamul-gukbap|Kongnamul gukbap - Korean bean sprout soup with rice, clear broth, bean sprouts, rice bowl. Top-down view.
+gul-gukbap|Gul gukbap - Korean oyster soup with rice, milky broth, fresh oysters, rice bowl. Top-down view, appetizing.
+chueotang|Chueotang - Korean loach soup, thick brownish broth, ground loach, vegetables. Top-down view.
+yukgaejang|Yukgaejang - Korean spicy beef soup, red broth, shredded beef, vegetables, scallions. Top-down view, steaming.
+jjimdak|Jjimdak - Korean braised chicken, soy-based sauce, chicken pieces, potatoes, glass noodles, vegetables. Top-down view.
+haemul-jjim|Haemul jjim - Korean spicy seafood stew, red sauce, crab, shrimp, clams, vegetables. Top-down view, appetizing.
+agu-jjim|Agu jjim - Korean spicy monkfish stew, red sauce, monkfish, bean sprouts, soybean sprouts. Top-down view.
+dak-hanmari|Dak hanmari - Korean whole chicken soup, clear broth, whole chicken, potatoes, rice cakes. Top-down view.
+galbi-jjim|Galbi jjim - Korean braised short ribs, glossy soy sauce, tender beef ribs, carrots, chestnuts. Top-down view.
+kalguksu|Kalguksu - Korean knife-cut noodle soup, clear broth, wide handmade noodles, zucchini, clams. Top-down view.
+haemul-kalguksu|Haemul kalguksu - Korean seafood noodle soup, milky broth, knife-cut noodles, seafood. Top-down view.
+janchi-guksu|Janchi guksu - Korean banquet noodles, clear anchovy broth, thin noodles, zucchini, egg garnish. Top-down view.
+manduguk|Manduguk - Korean dumpling soup, clear broth, dumplings, rice cakes, egg garnish. Top-down view.
+naengmyeon|Naengmyeon - Korean cold buckwheat noodles, icy broth, thin noodles, cucumber, egg, beef. Top-down view.
+bibim-naengmyeon|Bibim naengmyeon - Korean spicy cold noodles, red sauce, buckwheat noodles, vegetables, egg. Top-down view.
+mulhoe|Mulhoe - Korean cold raw fish soup, icy spicy broth, raw fish slices, vegetables. Top-down view, refreshing.
+milmyeon|Milmyeon - Korean wheat noodles, cold broth, chewy noodles, vegetables, egg. Top-down view, refreshing.
+samgyeopsal|Samgyeopsal - Korean grilled pork belly, thick slices on grill, sizzling, lettuce wraps. Top-down view.
+galbi-gui|Galbi gui - Korean grilled beef short ribs, marinated ribs on grill, caramelized. Top-down view.
+bulgogi|Bulgogi - Korean marinated beef, thin slices in sweet soy sauce, onions, scallions. Top-down view, sizzling.
+bossam|Bossam - Korean boiled pork wraps, sliced pork belly, napa cabbage, kimchi, sauces. Top-down view.
+jeyuk-bokkeum|Jeyuk bokkeum - Korean spicy stir-fried pork, red sauce, pork slices, onions, peppers. Top-down view, sizzling.
+ojingeo-bokkeum|Ojingeo bokkeum - Korean spicy stir-fried squid, red sauce, squid, vegetables, rice cakes. Top-down view.
+nakji-bokkeum|Nakji bokkeum - Korean spicy stir-fried octopus, red sauce, octopus, vegetables, noodles. Top-down view, spicy.
+dakgalbi|Dakgalbi - Korean spicy stir-fried chicken, red sauce, chicken, cabbage, sweet potato, rice cakes. Top-down view.
+galchijorim|Galchijorim - Korean braised cutlassfish, spicy red sauce, fish, radish, peppers. Top-down view.
+jangeo-gui|Jangeo gui - Korean grilled eel, glazed with sauce, on grill, caramelized. Top-down view, appetizing.
+daegu-tang|Daegu tang - Korean cod soup, clear broth, cod pieces, tofu, vegetables. Top-down view, steaming.
+mulmegi-tang|Mulmegi tang - Korean pollack roe soup, spicy broth, roe sacs, tofu, vegetables. Top-down view.
+bibimbap|Bibimbap - Korean mixed rice bowl, colorful vegetables, beef, fried egg, gochujang. Top-down view, vibrant.
+dolsot-bibimbap|Dolsot bibimbap - Korean stone pot rice, sizzling stone bowl, vegetables, beef, egg. Top-down view, crispy bottom.
+kimchi-bokkeumbap|Kimchi bokkeumbap - Korean kimchi fried rice, red rice, kimchi, vegetables, fried egg on top. Top-down view.
+jeyuk-deopbap|Jeyuk deopbap - Korean spicy pork rice bowl, rice, spicy pork, vegetables. Top-down view.
+bulgogi-deopbap|Bulgogi deopbap - Korean bulgogi rice bowl, rice, sweet beef, vegetables, egg. Top-down view.
+kkomak-bibimbap|Kkomak bibimbap - Korean cockle mixed rice, rice, cockles, vegetables, gochujang. Top-down view.
+jeonbok-juk|Jeonbok juk - Korean abalone porridge, creamy rice porridge, abalone slices. Top-down view, elegant.
+jangeo-deopbap|Jangeo deopbap - Korean grilled eel rice bowl, rice, glazed eel, sauce. Top-down view.
+ojingeo-deopbap|Ojingeo deopbap - Korean spicy squid rice bowl, rice, spicy squid, vegetables. Top-down view.
+yukgaejang-deopbap|Yukgaejang deopbap - Korean spicy beef soup rice bowl, rice, yukgaejang soup. Top-down view.
+gamja-ongsimi|Gamja ongsimi - Korean potato dumpling soup, clear broth, potato dumplings, vegetables. Top-down view.
+hwangtae-haejangguk|Hwangtae haejangguk - Korean dried pollack soup, spicy broth, dried pollack, vegetables. Top-down view.
+dodari-ssukguk|Dodari ssukguk - Korean flounder mugwort soup, clear broth, flounder, mugwort. Top-down view, spring dish.
+maesaengi-guk|Maesaengi guk - Korean seaweed fulvescens soup, clear broth, green seaweed. Top-down view, nutritious.
+jang-gejang|Jang gejang - Korean soy sauce marinated crab, whole crab in soy sauce, glistening. Top-down view.
+yangnyeom-gejang|Yangnyeom gejang - Korean spicy marinated crab, whole crab in red sauce. Top-down view, spicy.
+gul-jjim|Gul jjim - Korean steamed oysters, fresh oysters on half shell, steamed. Top-down view.
+daege|Daege - Korean snow crab, whole steamed crab, legs spread. Top-down view, luxurious.
+king-crab|King crab - Korean style king crab, steamed king crab legs, large size. Top-down view, premium.
+gogi-guksu|Gogi guksu - Korean meat noodle soup, clear broth, thin noodles, beef slices. Top-down view.
+okdom-gui|Okdom gui - Korean grilled tilefish, whole grilled fish, golden brown. Top-down view, Jeju specialty.
+seongge-miyeokguk|Seongge miyeokguk - Korean sea urchin seaweed soup, clear broth, sea urchin, seaweed. Top-down view.
+baechu-kimchi-jjigae|Baechu kimchi jjigae - Korean napa kimchi stew, spicy broth, kimchi, pork, tofu. Top-down view.
+kkotgetang|Kkotgetang - Korean blue crab soup, spicy red broth, blue crabs, vegetables. Top-down view.
+altang|Altang - Korean fish roe soup, spicy broth, various fish roes, tofu. Top-down view.
+tteokbokki|Tteokbokki - Korean spicy rice cakes, red sauce, chewy rice cakes, fish cakes, scallions. Top-down view.
+gimbap|Gimbap - Korean seaweed rice rolls, sliced rolls showing colorful fillings, vegetables, egg. Top-down view.
+ramyeon|Ramyeon - Korean instant noodles, red spicy broth, curly noodles, vegetables, egg. Top-down view, steaming.
+sundae|Sundae - Korean blood sausage, sliced sausage showing rice filling, liver. Top-down view, with dipping sauce.
+twigim|Twigim - Korean assorted tempura, fried vegetables, shrimp, squid, golden crispy. Top-down view.
+eomuk|Eomuk - Korean fish cake skewers, fish cakes on sticks in hot broth. Top-down view, street food.
+chikin|Chikin - Korean fried chicken, crispy golden pieces, glazed with sauce. Top-down view, appetizing.
+jjajangmyeon|Jjajangmyeon - Korean black bean noodles, thick noodles with black sauce, vegetables, pork. Top-down view.
+ganjjajang|Ganjjajang - Korean dry black bean noodles, noodles mixed with thick black sauce, minimal sauce. Top-down view.
+jjamppong|Jjamppong - Korean spicy seafood noodles, red broth, noodles, seafood, vegetables. Top-down view, spicy.
+tangsuyuk|Tangsuyuk - Korean sweet and sour pork, crispy pork pieces, sweet and sour sauce, vegetables. Top-down view.
+bokkeumbap|Bokkeumbap - Korean fried rice, mixed fried rice with vegetables, egg, shrimp. Top-down view.
+mapadubu|Mapadubu - Korean style mapo tofu, spicy red sauce, soft tofu, ground pork. Top-down view.
+chobap|Chobap - Korean sushi, assorted nigiri sushi, fresh fish on rice. Top-down view, elegant.
+udon|Udon - Korean style udon, thick wheat noodles, clear broth, tempura. Top-down view.
+ramen|Ramen - Korean style ramen, rich broth, noodles, chashu pork, egg, vegetables. Top-down view.
+donkaseu|Donkaseu - Korean pork cutlet, breaded fried pork, crispy golden, with sauce. Top-down view.
+gyudon|Gyudon - Korean style beef bowl, rice, sweet soy beef, onions, egg. Top-down view.
+pizza|Pizza - Korean style pizza, cheese pizza with various toppings, melted cheese. Top-down view.
+pasta|Pasta - Korean style pasta, spaghetti or cream pasta with sauce. Top-down view, appetizing.
+steak|Steak - Korean style beef steak, grilled beef steak, medium rare, vegetables. Top-down view.
+salad|Salad - Korean style salad, fresh mixed greens, vegetables, dressing. Top-down view, healthy.
+hamburger|Hamburger - Korean style burger, thick patty, lettuce, tomato, cheese, bun. Top-down view.
+sandwich|Sandwich - Korean style sandwich, club sandwich with layers, vegetables, meat. Top-down view.
+ssal-guksu|Ssal guksu - Vietnamese pho style rice noodles, clear broth, thin rice noodles, beef, herbs. Top-down view.

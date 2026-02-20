@@ -1,0 +1,17 @@
+# 인기 메뉴 우선순위 (15-20개)
+tteokbokki (떡볶이) - 분식 대표
+gimbap (김밥) - 분식 대표
+ramyeon (라면) - 분식 인기
+chikin (치킨) - 치킨 대표
+jjajangmyeon (짜장면) - 중식 대표
+jjamppong (짬뽕) - 중식 인기
+tangsuyuk (탕수육) - 중식 인기
+chobap (초밥) - 일식 대표
+udon (우동) - 일식 인기
+ramen (라멘) - 일식 인기
+donkaseu (돈까스) - 일식/양식 인기
+pizza (피자) - 양식 대표
+pasta (파스타) - 양식 인기
+hamburger (햄버거) - 패스트푸드 대표
+jeonbok-juk (전복죽) - 한식 고급
+jang-gejang (간장게장) - 한식 인기
