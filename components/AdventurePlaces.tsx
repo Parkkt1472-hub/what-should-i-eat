@@ -44,19 +44,35 @@ export default function AdventurePlaces({
     setError(null);
 
     try {
-      const params = new URLSearchParams({ menu: menuName });
+      // 이색맛집 API: /api/naver-local?mode=exotic 사용
+      const params = new URLSearchParams({ 
+        menu: menuName,
+        mode: 'exotic' // 이색 키워드 검색 모드
+      });
       if (region) {
-        params.append('region', region);
+        params.append('location', region);
       }
 
-      const response = await fetch(`/api/adventure?${params.toString()}`);
+      const response = await fetch(`/api/naver-local?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch adventure places');
       }
 
       const data = await response.json();
-      setPlaces(data.items || []);
+      
+      // 결과를 AdventurePlace 형식으로 변환
+      const convertedPlaces = (data.items || []).map((item: any, index: number) => ({
+        rank: index + 1,
+        title: item.title,
+        address: item.address,
+        category: item.category,
+        keyword: '이색맛집',
+        adventureScore: 80 + (5 - index) * 4, // 순서대로 점수 부여
+        adventureLevel: 80 + (5 - index) * 4 // 0-100%
+      }));
+      
+      setPlaces(convertedPlaces);
     } catch (err) {
       console.error('[AdventurePlaces] Error:', err);
       setError('이색맛집 정보를 불러올 수 없어요');

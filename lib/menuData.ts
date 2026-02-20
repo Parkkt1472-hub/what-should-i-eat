@@ -66,6 +66,10 @@ export interface MenuMeta {
   tags?: string[];
 }
 
+// 새로운 menuDatabase import
+import { menuDatabase as newMenuDatabase, MenuItem as NewMenuItem, EXOTIC_KEYWORDS } from './menuDatabase';
+
+// 기존 인터페이스 유지 (호환성)
 export interface MenuItem {
   name: string;
   category: string;
@@ -76,8 +80,28 @@ export interface MenuItem {
   meta?: MenuMeta; // personalized 추천용 메타데이터
 }
 
-export const menuDatabase: MenuItem[] = [
-  // 한식 (with meta)
+// 새 DB를 기존 형식으로 변환
+function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
+  return {
+    name: newMenu.name,
+    category: newMenu.category,
+    familyFriendly: true, // 기본값
+    spicyLevel: newMenu.spicy ? 2 : 0,
+    ingredients: newMenu.ingredients,
+    difficulty: '보통',
+    meta: undefined // 필요시 나중에 추가
+  };
+}
+
+// 기존 코드 호환성을 위해 export
+export const menuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
+
+// 이색 키워드도 export
+export { EXOTIC_KEYWORDS };
+
+// 기존 상세 메뉴 데이터 (meta 정보가 있는 메뉴들)
+const detailedMenus: MenuItem[] = [
+  // 한식 (with meta) - 상세 정보가 필요한 메뉴들만 여기 유지
   { 
     name: '김치찌개', category: '한식', 
     ingredients: ['김치', '돼지고기', '두부', '대파', '양파'], 
