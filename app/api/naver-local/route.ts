@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // 10분 캐시 저장소
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_VERSION = 'v5'; // 캐시 버전 (변경 시 기존 캐시 무효화)
+const CACHE_VERSION = 'v6'; // 캐시 버전 (변경 시 기존 캐시 무효화)
 
 // HTML 태그 제거 함수
 function stripHtmlTags(text: string): string {
@@ -49,19 +49,44 @@ function isInLocation(address: string, location: string | null): boolean {
   const normalizedAddress = address.replace(/\s+/g, '').toLowerCase();
   const normalizedLocation = location.replace(/\s+/g, '').toLowerCase();
   
-  // 주소에 지역명이 포함되어 있는지 확인
-  // 예: location="양산" → "경남양산시", "양산시", "양산군" 등 모두 허용
+  console.log(`[isInLocation] Checking: "${address}" contains "${location}"?`);
+  console.log(`  Normalized: "${normalizedAddress}" contains "${normalizedLocation}"?`);
+  
+  // 1. 기본 매칭 (공백 제거)
   if (normalizedAddress.includes(normalizedLocation)) {
+    console.log(`  ✅ Match: basic inclusion`);
     return true;
   }
   
-  // 특수 케이스: "시" 또는 "군" 추가해서 재검색
-  // 예: "양산" → "양산시" 또는 "양산군"도 허용
-  const locationWithSuffix = normalizedLocation + '시';
+  // 2. "시" 또는 "군" 추가
+  const locationWithSi = normalizedLocation + '시';
   const locationWithGun = normalizedLocation + '군';
   
-  return normalizedAddress.includes(locationWithSuffix) || 
-         normalizedAddress.includes(locationWithGun);
+  if (normalizedAddress.includes(locationWithSi)) {
+    console.log(`  ✅ Match: with 시 suffix`);
+    return true;
+  }
+  
+  if (normalizedAddress.includes(locationWithGun)) {
+    console.log(`  ✅ Match: with 군 suffix`);
+    return true;
+  }
+  
+  // 3. 주소를 단어로 분리해서 매칭
+  // "경남 양산시" → ["경남", "양산시"]
+  const addressWords = address.split(/\s+/);
+  for (const word of addressWords) {
+    const normalizedWord = word.toLowerCase();
+    if (normalizedWord.includes(normalizedLocation) || 
+        normalizedWord.includes(locationWithSi) ||
+        normalizedWord.includes(locationWithGun)) {
+      console.log(`  ✅ Match: word-based (${word})`);
+      return true;
+    }
+  }
+  
+  console.log(`  ❌ No match`);
+  return false;
 }
 
 export async function GET(request: NextRequest) {
@@ -237,7 +262,7 @@ export async function GET(request: NextRequest) {
     
     // 필터링 후 결과가 5개 미만이면 카테고리 필터링만 제거 (지역 필터링은 유지)
     if (filtered.length < 5) {
-      console.log('[naver-local API] Too few results after filtering, removing category filter but keeping location filter');
+      console.log('[naver-local API] ⚠️ Too few results after filtering, removing category filter but keeping location filter');
       filtered = data.items.filter((item: any) => {
         if (!item.title || !stripHtmlTags(item.title).trim()) {
           return false;
@@ -249,6 +274,15 @@ export async function GET(request: NextRequest) {
       });
       
       console.log('[naver-local API] After location-only filtering:', filtered.length, 'items');
+    }
+    
+    // 여전히 부족하면 지역 필터링도 제거
+    if (filtered.length < 3) {
+      console.log('[naver-local API] ⚠️ Still too few results, removing ALL filters');
+      filtered = data.items.filter((item: any) => 
+        item.title && stripHtmlTags(item.title).trim()
+      );
+      console.log('[naver-local API] After removing all filters:', filtered.length, 'items');
     }
     
     // 여전히 부족하면 display를 늘려서 재검색
