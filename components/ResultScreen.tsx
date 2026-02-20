@@ -95,18 +95,25 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       { mode }
     );
 
-    // 🎵 Spin 사운드 재생 (루프) - await로 확실하게!
+    // 🎵 Spin 사운드 재생 (루프) - 즉시 시작
     console.log('[Roulette] 🔊 Starting spin sound...');
-    audioManager.play('spin', { volume: 0.5, loop: true }).then((audio) => {
-      spinAudio = audio;
-      if (audio) {
-        console.log('[Roulette] ✅ Spin sound playing!');
-      } else {
-        console.error('[Roulette] ❌ Spin sound FAILED!');
+    
+    // 비동기로 재생 시작 (블로킹하지 않음)
+    const playSpinSound = async () => {
+      try {
+        spinAudio = await audioManager.play('spin', { volume: 0.5, loop: true });
+        if (spinAudio) {
+          console.log('[Roulette] ✅ Spin sound playing!');
+        } else {
+          console.error('[Roulette] ❌ Spin sound FAILED!');
+        }
+      } catch (err) {
+        console.error('[Roulette] 💥 Spin sound error:', err);
       }
-    }).catch((err) => {
-      console.error('[Roulette] 💥 Spin sound error:', err);
-    });
+    };
+    
+    // 즉시 실행하되 기다리지 않음
+    playSpinSound();
 
     // duration 시간 후 스핀 사운드 정지
     const spinStopTimer = setTimeout(() => {

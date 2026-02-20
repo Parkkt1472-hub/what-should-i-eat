@@ -110,6 +110,11 @@ class AudioManager {
         this.audioElements.set(soundType, audio);
       }
 
+      // 이미 재생 중이면 먼저 정지
+      if (!audio.paused) {
+        audio.pause();
+      }
+
       // 설정 적용
       audio.volume = volume;
       audio.loop = loop;
@@ -118,9 +123,13 @@ class AudioManager {
       console.log(`[AudioManager] 🔊 Playing ${soundType}... (volume: ${volume}, loop: ${loop})`);
 
       // 재생 시도
-      await audio.play();
+      const playPromise = audio.play();
       
-      console.log(`[AudioManager] ✅ ${soundType} playing successfully!`);
+      // Promise가 있으면 await
+      if (playPromise !== undefined) {
+        await playPromise;
+        console.log(`[AudioManager] ✅ ${soundType} playing successfully!`);
+      }
       
       return audio;
 
