@@ -335,10 +335,15 @@ function buildResult(
 
 // Personalized decision
 function makePersonalizedDecision(input: DecisionInput): DecisionResult {
-  const { who, preferences, excludeMenu } = input;
+  const { who, how, preferences, excludeMenu } = input;
   if (!preferences) throw new Error('Preferences required for personalized mode');
 
   let availableMenus = filterMenuByContext(who);
+
+  // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
+  if (how === '만들어 먹기') {
+    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  }
 
   if (excludeMenu) {
     const filtered = availableMenus.filter((item) => item.name !== excludeMenu);
@@ -377,6 +382,11 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
   const { who, how, outdoor, excludeMenu } = input;
 
   let availableMenus = filterMenuByContext(who);
+
+  // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
+  if (how === '만들어 먹기') {
+    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  }
 
   // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리
   const selectedMenu = selectDiverseMenu(availableMenus, excludeMenu);
