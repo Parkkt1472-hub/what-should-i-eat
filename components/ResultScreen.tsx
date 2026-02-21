@@ -2,7 +2,7 @@
 
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
-import { audioManager, triggerVibration } from '@/lib/audioManager';
+import { webAudioEngine, vibrate } from '@/lib/webAudioEngine';
 import { playClickSound, playSuccessSound } from '@/lib/soundEffects';
 import { getRandomMent } from '@/lib/randomMents';
 

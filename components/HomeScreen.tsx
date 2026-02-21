@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { audioManager } from '@/lib/audioManager';
+import { webAudioEngine } from '@/lib/webAudioEngine';
 import { playClickSound, playModalSound } from '@/lib/soundEffects';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
@@ -54,7 +54,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
     }
 
     // 사운드 미리 로드
-    audioManager.initialize();
+    webAudioEngine.init();
   }, []);
 
   useEffect(() => {
@@ -162,14 +162,11 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
             onClick={async () => {
               console.log('[HomeScreen] 🎮 Button clicked!');
               
-              // 1. 오디오 unlock (필수!)
-              const unlocked = await audioManager.unlockAudio();
-              if (!unlocked) {
-                console.error('[HomeScreen] ❌ Audio unlock failed!');
-              }
+              // 1. WebAudio unlock (필수!)
+              await webAudioEngine.unlock();
               
               // 2. 클릭 사운드 즉시 재생
-              await audioManager.play('click', { volume: 0.4 });
+              playClickSound();
               
               // 3. 결정 시작
               onStartDecision();
