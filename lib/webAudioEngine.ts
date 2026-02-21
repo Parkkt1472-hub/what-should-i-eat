@@ -12,7 +12,10 @@ class WebAudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private successAudio: HTMLAudioElement | null = null;
+  private clickBuffer: AudioBuffer | null = null;
+  private spinBuffer: AudioBuffer | null = null;
   private isUnlocked = false;
+  private spinSource: AudioBufferSourceNode | null = null;
 
   /**
    * AudioContext 초기화
@@ -28,13 +31,39 @@ class WebAudioEngine {
       this.masterGain.gain.value = 0.9;
       this.masterGain.connect(this.ctx.destination);
 
-      // 성공 사운드는 기존 HTMLAudio 유지
+      // 오디오 파일 로드
+      await this.loadAudioFiles();
+
+      console.log('[WebAudio] ✅ Initialized with audio files');
+    } catch (error) {
+      console.error('[WebAudio] ❌ Init failed:', error);
+    }
+  }
+
+  /**
+   * 오디오 파일 로드
+   */
+  private async loadAudioFiles() {
+    if (!this.ctx) return;
+
+    try {
+      // Click 사운드 로드
+      const clickResponse = await fetch('/sounds/click.mp3');
+      const clickArrayBuffer = await clickResponse.arrayBuffer();
+      this.clickBuffer = await this.ctx.decodeAudioData(clickArrayBuffer);
+
+      // Spin 사운드 로드
+      const spinResponse = await fetch('/sounds/spin.mp3');
+      const spinArrayBuffer = await spinResponse.arrayBuffer();
+      this.spinBuffer = await this.ctx.decodeAudioData(spinArrayBuffer);
+
+      // Success 사운드는 HTMLAudio 유지
       this.successAudio = new Audio('/sounds/success.mp3');
       this.successAudio.preload = 'auto';
 
-      console.log('[WebAudio] ✅ Initialized');
+      console.log('[WebAudio] 🎵 Audio files loaded');
     } catch (error) {
-      console.error('[WebAudio] ❌ Init failed:', error);
+      console.error('[WebAudio] ❌ Audio file load failed:', error);
     }
   }
 
@@ -54,228 +83,123 @@ class WebAudioEngine {
   }
 
   /**
-   * 버튼 클릭 사운드 (임팩트 강화)
-   * - soft glass pop + micro bass tap
-   * - 길이: 0.10~0.14초
+   * 버튼 클릭 사운드 (실제 파일 재생)
+   * - mixkit-arrow-whoosh-1491.wav
    * - 랜덤 pitch ±4%, volume ±5%
    */
   playClick() {
-    if (!this.ctx || !this.masterGain) return;
+    if (!this.ctx || !this.masterGain || !this.clickBuffer) {
+      console.warn('[WebAudio] ⚠️ Click buffer not ready');
+      return;
+    }
 
-    const now = this.ctx.currentTime;
-    
-    // 랜덤화 (반복 시 질리지 않음)
-    const pitchVariation = 0.96 + Math.random() * 0.08; // ±4%
-    const volumeVariation = 0.95 + Math.random() * 0.1; // ±5%
+    try {
+      // 랜덤화 (반복 시 질리지 않음)
+      const pitchVariation = 0.96 + Math.random() * 0.08; // ±4%
+      const volumeVariation = 0.95 + Math.random() * 0.1; // ±5%
 
-    // === High-frequency Glass Pop (1.6~2.5kHz) ===
-    const popOsc = this.ctx.createOscillator();
-    const popGain = this.ctx.createGain();
-    const popFilter = this.ctx.createBiquadFilter();
+      // BufferSource 생성
+      const source = this.ctx.createBufferSource();
+      source.buffer = this.clickBuffer;
+      source.playbackRate.value = pitchVariation;
 
-    popOsc.type = 'sine';
-    popOsc.frequency.setValueAtTime(2000 * pitchVariation, now);
-    popOsc.frequency.exponentialRampToValueAtTime(1600 * pitchVariation, now + 0.08);
+      // Gain 노드
+      const gain = this.ctx.createGain();
+      gain.gain.value = 0.5 * volumeVariation;
 
-    popFilter.type = 'highpass';
-    popFilter.frequency.value = 400; // 저음 차단
+      // High-pass filter (400Hz)
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 400;
 
-    popGain.gain.setValueAtTime(0.4 * volumeVariation, now);
-    popGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      // 연결
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
 
-    popOsc.connect(popFilter);
-    popFilter.connect(popGain);
-    popGain.connect(this.masterGain);
+      // 재생
+      source.start(0);
 
-    popOsc.start(now);
-    popOsc.stop(now + 0.12);
-
-    // === Micro Bass Tap (120~180Hz, 매우 짧게) ===
-    const bassOsc = this.ctx.createOscillator();
-    const bassGain = this.ctx.createGain();
-
-    bassOsc.type = 'triangle';
-    bassOsc.frequency.value = 150 * pitchVariation;
-
-    bassGain.gain.setValueAtTime(0.15 * volumeVariation, now);
-    bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
-
-    bassOsc.connect(bassGain);
-    bassGain.connect(this.masterGain);
-
-    bassOsc.start(now);
-    bassOsc.stop(now + 0.04);
-
-    console.log('[WebAudio] 🖱️ Click played');
+      console.log('[WebAudio] 🖱️ Click played (pitch:', pitchVariation.toFixed(2), ')');
+    } catch (error) {
+      console.error('[WebAudio] ❌ Click play failed:', error);
+    }
   }
 
   /**
-   * 룰렛 사운드 (중독성 구조)
-   * - start → acceleration loop → slow down → stop
+   * 룰렛 사운드 (실제 파일 재생)
+   * - pwlpl-inception-style-rising-tone-377247.mp3
+   * - 루프 재생, 수동 중단 가능
    */
-  private rouletteInterval: number | null = null;
   private rouletteGain: GainNode | null = null;
 
   startRoulette(duration: number): Promise<void> {
     return new Promise((resolve) => {
-      if (!this.ctx || !this.masterGain) {
+      if (!this.ctx || !this.masterGain || !this.spinBuffer) {
+        console.warn('[WebAudio] ⚠️ Spin buffer not ready');
         resolve();
         return;
       }
 
-      const now = this.ctx.currentTime;
+      try {
+        // BufferSource 생성 (루프)
+        this.spinSource = this.ctx.createBufferSource();
+        this.spinSource.buffer = this.spinBuffer;
+        this.spinSource.loop = true;
 
-      // === Start Whoosh (0.2초) ===
-      this.playStartWhoosh();
+        // Gain 노드
+        this.rouletteGain = this.ctx.createGain();
+        this.rouletteGain.gain.value = 0.6;
 
-      // === Acceleration Loop ===
-      let tickCount = 0;
-      let tickInterval = 80; // 초기 간격 (ms)
-      const minInterval = 40; // 최소 간격
-      let currentPitch = 1.0;
+        // High-pass filter (400Hz)
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 400;
 
-      this.rouletteInterval = window.setInterval(() => {
-        // 가속 (점점 빨라짐)
-        if (tickInterval > minInterval) {
-          tickInterval = Math.max(minInterval, tickInterval - 2);
-        }
+        // 연결
+        this.spinSource.connect(filter);
+        filter.connect(this.rouletteGain);
+        this.rouletteGain.connect(this.masterGain);
 
-        // Pitch 상승 (긴장감)
-        currentPitch = Math.min(1.15, currentPitch + 0.005);
+        // 재생
+        this.spinSource.start(0);
+        console.log('[WebAudio] 🎰 Spin sound started (loop)');
 
-        this.playRouletteTickHigh(currentPitch);
-        tickCount++;
-      }, tickInterval);
-
-      // === Slow Down & Stop ===
-      setTimeout(() => {
-        if (this.rouletteInterval) {
-          clearInterval(this.rouletteInterval);
-          this.rouletteInterval = null;
-        }
-
-        // 감속 구간
-        this.playSlowDownTicks(() => {
-          // Stop tick
-          this.playStopTick();
-          console.log('[WebAudio] 🎰 Roulette stopped');
+        // duration 후 자동 중단
+        setTimeout(() => {
+          this.stopRoulette();
           resolve();
-        });
-      }, duration - 500); // 마지막 500ms는 감속
+        }, duration);
+      } catch (error) {
+        console.error('[WebAudio] ❌ Spin play failed:', error);
+        resolve();
+      }
     });
   }
 
   stopRoulette() {
-    if (this.rouletteInterval) {
-      clearInterval(this.rouletteInterval);
-      this.rouletteInterval = null;
-    }
-    console.log('[WebAudio] ⏹️ Roulette stopped manually');
-  }
-
-  /**
-   * Start Whoosh (0.2초)
-   */
-  private playStartWhoosh() {
-    if (!this.ctx || !this.masterGain) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(1800, now + 0.15);
-
-    filter.type = 'highpass';
-    filter.frequency.value = 600;
-
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(now);
-    osc.stop(now + 0.2);
-  }
-
-  /**
-   * High-frequency Tick (가속 루프용)
-   */
-  private playRouletteTickHigh(pitch: number = 1.0) {
-    if (!this.ctx || !this.masterGain) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = 'sine';
-    osc.frequency.value = 1200 * pitch;
-
-    filter.type = 'highpass';
-    filter.frequency.value = 500;
-
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(now);
-    osc.stop(now + 0.05);
-  }
-
-  /**
-   * Slow Down Ticks (감속 구간)
-   */
-  private playSlowDownTicks(onComplete: () => void) {
-    if (!this.ctx) {
-      onComplete();
-      return;
-    }
-
-    let delays = [0, 60, 140, 240, 360]; // 점점 간격 증가
-    delays.forEach((delay, index) => {
-      setTimeout(() => {
-        this.playRouletteTickHigh(1.0 - index * 0.05); // Pitch 하강
-        if (index === delays.length - 1) {
-          setTimeout(onComplete, 100);
+    if (this.spinSource) {
+      try {
+        // Fade out (0.2초)
+        if (this.ctx && this.rouletteGain) {
+          const now = this.ctx.currentTime;
+          this.rouletteGain.gain.linearRampToValueAtTime(0, now + 0.2);
+          
+          setTimeout(() => {
+            if (this.spinSource) {
+              this.spinSource.stop();
+              this.spinSource = null;
+            }
+          }, 200);
+        } else {
+          this.spinSource.stop();
+          this.spinSource = null;
         }
-      }, delay);
-    });
-  }
-
-  /**
-   * Stop Tick (짧고 또렷한 메탈릭)
-   */
-  private playStopTick() {
-    if (!this.ctx || !this.masterGain) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = 'square';
-    osc.frequency.value = 2400;
-
-    filter.type = 'highpass';
-    filter.frequency.value = 800;
-
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(now);
-    osc.stop(now + 0.08);
+        console.log('[WebAudio] ⏹️ Spin sound stopped');
+      } catch (error) {
+        console.warn('[WebAudio] ⚠️ Spin stop error (already stopped?)');
+      }
+    }
   }
 
   /**

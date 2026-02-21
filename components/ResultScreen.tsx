@@ -96,31 +96,11 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
       { mode }
     );
 
-    // 🎵 Spin 사운드 재생 (루프) - 즉시 시작
-    console.log('[Roulette] 🔊 Starting spin sound...');
-    
-    // 비동기로 재생 시작 (블로킹하지 않음)
-    const playSpinSound = async () => {
-      try {
-        spinAudio = await audioManager.play('spin', { volume: 0.5, loop: true });
-        if (spinAudio) {
-          console.log('[Roulette] ✅ Spin sound playing!');
-        } else {
-          console.error('[Roulette] ❌ Spin sound FAILED!');
-        }
-      } catch (err) {
-        console.error('[Roulette] 💥 Spin sound error:', err);
-      }
-    };
-    
-    // 즉시 실행하되 기다리지 않음
-    playSpinSound();
-
-    // duration 시간 후 스핀 사운드 정지
-    const spinStopTimer = setTimeout(() => {
-      console.log('[Roulette] ⏹️ Stopping spin sound...');
-      audioManager.stop('spin');
-    }, duration);
+    // 🎵 Spin 사운드 재생 (실제 파일, 루프)
+    console.log('[Roulette] 🔊 Starting spin sound (pwlpl-inception)...');
+    webAudioEngine.startRoulette(duration).then(() => {
+      console.log('[Roulette] ✅ Spin sound completed');
+    });
 
     intervalId = setInterval(() => {
       elapsed += 50;
@@ -137,8 +117,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
       if (elapsed >= duration) {
         if (intervalId) clearInterval(intervalId);
-        clearTimeout(spinStopTimer);
-        audioManager.stop('spin');
+        webAudioEngine.stopRoulette();
 
         setIsRouletting(false);
         setShowAlmost(false);
@@ -155,14 +134,8 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
         // 🎉 성공 사운드 + 진동
         console.log('[Roulette] 🔊 Playing success sound...');
-        audioManager.play('success', { volume: 0.5 }).then((audio) => {
-          if (audio) {
-            console.log('[Roulette] ✅ Success sound playing!');
-          } else {
-            console.error('[Roulette] ❌ Success sound FAILED!');
-          }
-        });
-        triggerVibration(50);
+        webAudioEngine.playSuccess();
+        vibrate(50);
 
         // 통계 기록
         const menuItem: any = menuDatabase.find((m: any) => m.name === decision.menu);
@@ -195,8 +168,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      clearTimeout(spinStopTimer);
-      audioManager.stop('spin');
+      webAudioEngine.stopRoulette();
     };
   }, [data, isRouletting, mode, previousMenu]);
 
