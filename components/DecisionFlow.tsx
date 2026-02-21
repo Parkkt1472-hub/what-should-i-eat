@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { playTabSound } from '@/lib/soundEffects';
 
 interface DecisionFlowProps {
   onComplete: (data: any) => void;
@@ -34,11 +35,13 @@ export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
   const [how, setHow] = useState<HowType | null>(null);
 
   const handleWhoSelect = (selected: WhoType) => {
+    playTabSound();
     setWho(selected);
     setTimeout(() => setStep('how'), 300);
   };
 
   const handleHowSelect = (selected: HowType) => {
+    playTabSound();
     setHow(selected);
     
     if (selected === '외식') {
@@ -55,6 +58,7 @@ export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
   };
 
   const handleOutdoorSelect = (selected: OutdoorType) => {
+    playTabSound();
     setTimeout(() => {
       onComplete({
         who,

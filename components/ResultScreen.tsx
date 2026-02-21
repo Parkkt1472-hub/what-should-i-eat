@@ -3,6 +3,7 @@
 // import Image from 'next/image'; // Removed to fix 400 errors
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { audioManager, triggerVibration } from '@/lib/audioManager';
+import { playClickSound, playSuccessSound } from '@/lib/soundEffects';
 import { getRandomMent } from '@/lib/randomMents';
 
 import { makeDecision } from '@/lib/decisionEngine';
@@ -200,6 +201,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   }, [data, isRouletting, mode, previousMenu]);
 
   const handleGetAnotherRecommendation = () => {
+    playClickSound();
     incrementUsage();
     setImageError(false);
     setShowShareSuccess(false);
@@ -417,7 +419,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
               <div className="mb-6">
                 {result.outdoor === '기분전환 야외' ? (
                   <button
-                    onClick={() => setShowLocalRestaurants(true)}
+                    onClick={() => { playClickSound(); setShowLocalRestaurants(true); }}
                     className="w-full p-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-2 border-purple-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
                   >
                     <div className="flex items-center justify-center gap-3">
@@ -435,7 +437,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                   </button>
                 ) : (
                   <button
-                    onClick={() => setShowLocalRestaurants(true)}
+                    onClick={() => { playClickSound(); setShowLocalRestaurants(true); }}
                     className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-2 border-green-300 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg"
                   >
                     <div className="flex items-center justify-center gap-3">
@@ -557,7 +559,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
             {data?.how === '외식' && <LocalSubmissions />}
 
             <button
-              onClick={onBackToHome}
+              onClick={() => { playClickSound(); onBackToHome(); }}
               className="mt-4 w-full py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition-all"
             >
               🏠 처음으로 돌아가기

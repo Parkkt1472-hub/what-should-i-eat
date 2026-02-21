@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { audioManager } from '@/lib/audioManager';
+import { playClickSound, playModalSound } from '@/lib/soundEffects';
 import PersonalizedSurveyModal from './PersonalizedSurveyModal';
 import HistoryModal from './HistoryModal';
 import StatsModal from './StatsModal';
@@ -65,6 +66,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
   }, [showStatsModal]);
 
   const handleCustomRecommendation = () => {
+    playClickSound();
     // 저장된 선호도가 있으면 바로 추천, 없으면 설문
     if (hasPreferences) {
       const stored = loadPreferences();
@@ -89,6 +91,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
   };
 
   const handleTopMenuClick = () => {
+    playClickSound();
     if (topMenu) {
       setShowLocalRestaurantsModal(true);
     }
@@ -206,7 +209,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         {/* Action Cards - 더 크고 눈에 띄게 */}
         <div className="pt-4 grid grid-cols-2 gap-4 w-full max-w-xl">
           <button
-            onClick={() => setShowStatsModal(true)}
+            onClick={() => { playClickSound(); setShowStatsModal(true); }}
             className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-blue-200 hover:border-blue-400 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
             <div className="text-center">
@@ -219,7 +222,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
           </button>
 
           <button
-            onClick={() => setShowHistoryModal(true)}
+            onClick={() => { playClickSound(); setShowHistoryModal(true); }}
             className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-purple-200 hover:border-purple-400 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
             <div className="text-center">
@@ -235,7 +238,7 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
         {/* Legal Disclaimer Link */}
         <div className="pt-2">
           <button
-            onClick={() => setShowDisclaimerModal(true)}
+            onClick={() => { playClickSound(); setShowDisclaimerModal(true); }}
             className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
           >
             법적 고지사항
@@ -246,15 +249,15 @@ export default function HomeScreen({ onStartDecision, onStartPersonalized }: Hom
       {/* Survey Modal */}
       <PersonalizedSurveyModal
         isOpen={showSurveyModal}
-        onClose={() => setShowSurveyModal(false)}
+        onClose={() => { playModalSound(); setShowSurveyModal(false); }}
         onSubmit={handleSurveySubmit}
       />
 
       {/* History Modal */}
-      <HistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} />
+      <HistoryModal isOpen={showHistoryModal} onClose={() => { playModalSound(); setShowHistoryModal(false); }} />
 
       {/* Stats Modal */}
-      <StatsModal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} />
+      <StatsModal isOpen={showStatsModal} onClose={() => { playModalSound(); setShowStatsModal(false); }} />
 
       {/* Location Input Modal */}
       <LocationInputModal
