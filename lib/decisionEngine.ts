@@ -77,6 +77,10 @@ function resolveMakeMenusWithFallback(
   const allowlistedMenus = filterFiveMinuteHomeMenus(menus);
   const allowlistedCount = allowlistedMenus.length;
 
+  if (allowlistedCount > 0) {
+    return allowlistedMenus;
+  }
+
   const categoryNormalizedNames = new Set(makeCategoryMenus.map((menu) => normalizeMenuName(menu.name)));
   const allowlistNotInMenuDatabase = Array.from(FIVE_MINUTE_HOME_MENU_NAMES).filter(
     (name) => !categoryNormalizedNames.has(normalizeMenuName(name))
