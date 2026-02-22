@@ -528,11 +528,19 @@ const detailedMenus: MenuItem[] = [
 
 const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
 
-// 상세 메뉴는 기본 DB를 덮어쓰고, 기본 DB에 없는 상세 메뉴(예: 만들어먹기)는 추가
-export const menuDatabase: MenuItem[] = [
-  ...baseMenuDatabase.map((menu) => detailedMenuMap.get(menu.name) ?? menu),
-  ...detailedMenus.filter((menu) => !baseMenuDatabase.some((base) => base.name === menu.name)),
-];
+const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
+const excludedDetailedMenus = detailedMenus
+  .filter((menu) => !baseMenuNameSet.has(menu.name))
+  .map((menu) => menu.name);
+
+if (excludedDetailedMenus.length > 0) {
+  console.info('[menuData] Excluded detailedMenus not present in baseMenuDatabase:', excludedDetailedMenus);
+}
+
+// 상세 메뉴는 baseMenuDatabase에 존재하는 항목만 보강
+export const menuDatabase: MenuItem[] = baseMenuDatabase.map(
+  (menu) => detailedMenuMap.get(menu.name) ?? menu
+);
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
