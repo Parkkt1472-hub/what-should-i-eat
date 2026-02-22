@@ -145,6 +145,7 @@ const detailedMenus: MenuItem[] = [
     name: '김치볶음밥', category: '한식', 
     ingredients: ['김치', '밥', '계란', '대파', '참기름'], 
     familyFriendly: true, spicyLevel: 2, difficulty: '쉬움',
+    image: '/menus/kimchi-bokkeumbap.jpg',
     meta: { spicy: 2, soup: 0, rice: true, noodle: false, meat: 1, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['한식', '간편', '매운'] }
   },
   { 
@@ -527,7 +528,6 @@ const detailedMenus: MenuItem[] = [
 ];
 
 const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
-
 const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
 const excludedDetailedMenus = detailedMenus
   .filter((menu) => !baseMenuNameSet.has(menu.name))
