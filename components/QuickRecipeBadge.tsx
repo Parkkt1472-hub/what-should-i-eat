@@ -1,12 +1,14 @@
 'use client';
 
+import type { MenuItem } from '@/lib/menuData';
+
 interface QuickRecipeBadgeProps {
   menuName: string;
-  menuDatabase: any[];
+  menuDatabase: MenuItem[];
 }
 
 export default function QuickRecipeBadge({ menuName, menuDatabase }: QuickRecipeBadgeProps) {
-  const menuItem = menuDatabase.find((m: any) => m.name === menuName);
+  const menuItem = menuDatabase.find((m) => m.name === menuName);
   const quickRecipes = menuItem?.quickRecipes || [];
   const randomRecipe = quickRecipes.length > 0 
     ? quickRecipes[Math.floor(Math.random() * quickRecipes.length)]
@@ -32,7 +34,7 @@ export default function QuickRecipeBadge({ menuName, menuDatabase }: QuickRecipe
       <div className="flex items-center justify-center gap-3 mb-3">
         <span className="text-3xl">⏱️</span>
         <div>
-          <h3 className="text-2xl font-bold text-green-800">5분컷</h3>
+          <h3 className="text-2xl font-bold text-green-800">⏱️ 5분컷</h3>
           <p className="text-sm text-green-600">냉장고 재료로 바로 만들어먹기</p>
         </div>
       </div>
