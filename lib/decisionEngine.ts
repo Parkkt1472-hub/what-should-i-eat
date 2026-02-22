@@ -6,6 +6,130 @@ type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
 type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
+
+const FIVE_MINUTE_HOME_MENU_NAMES = new Set([
+  '간장계란밥',
+  '스팸마요덮밥',
+  '참치마요비빔밥',
+  '대패삼겹살 덮밥',
+  '명란아보카도 비빔밥',
+  '고추장 참치 비빔밥',
+  '카레',
+  '하이라이스',
+  '강된장 비빔밥',
+  '마파두부 덮밥',
+  '김치볶음밥',
+  '계란볶음밥',
+  '새우볶음밥',
+  '베이컨 마늘 볶음밥',
+  '스팸 구이와 흰쌀밥',
+  '비빔국수',
+  '간장비빔국수',
+  '알리오올리오',
+  '김치비빔국수',
+  '불닭게티',
+  '잔치국수',
+  '콩국수',
+  '참치 김치찌개',
+  '스팸 부대찌개',
+  '순두부찌개',
+  '어묵탕',
+  '떡만두국',
+  '김치전',
+  '계란말이',
+  '콘치즈',
+]);
+
+const normalizeMenuName = (s: string): string =>
+  s.replace(/\s+/g, '').replace(/[+()]/g, '').toLowerCase();
+
+const normalizeHowValue = (value: string): string => normalizeMenuName(value);
+
+const isMakeHow = (how: string): boolean => {
+  const normalized = normalizeHowValue(how);
+  return normalized === '만들어먹기' || normalized === 'cook';
+};
+
+const MAKE_CATEGORY_NORMALIZED = normalizeMenuName('만들어먹기');
+const NORMALIZED_MAKE_ALLOWLIST = new Set(
+  Array.from(FIVE_MINUTE_HOME_MENU_NAMES).map((name) => normalizeMenuName(name))
+);
+
+function getMakeCategoryMenus(menus: MenuItem[]): MenuItem[] {
+  return menus.filter((menu) => normalizeMenuName(menu.category) === MAKE_CATEGORY_NORMALIZED);
+}
+
+function filterFiveMinuteHomeMenus(menus: MenuItem[]): MenuItem[] {
+  return getMakeCategoryMenus(menus).filter((menu) =>
+    NORMALIZED_MAKE_ALLOWLIST.has(normalizeMenuName(menu.name))
+  );
+}
+
+function resolveMakeMenusWithFallback(
+  menus: MenuItem[],
+  context: { who: WhoType; how: string; outdoor: OutdoorType | null; mode: DecisionMode }
+): MenuItem[] {
+  if (!isMakeHow(context.how)) return menus;
+
+  const totalMenusCount = menus.length;
+  const makeCategoryMenus = getMakeCategoryMenus(menus);
+  const afterCategoryFilterCount = makeCategoryMenus.length;
+  const allowlistedMenus = filterFiveMinuteHomeMenus(menus);
+  const allowlistedCount = allowlistedMenus.length;
+
+  const categoryNormalizedNames = new Set(makeCategoryMenus.map((menu) => normalizeMenuName(menu.name)));
+  const allowlistNotInMenuDatabase = Array.from(FIVE_MINUTE_HOME_MENU_NAMES).filter(
+    (name) => !categoryNormalizedNames.has(normalizeMenuName(name))
+  );
+  const menuDatabaseNotInAllowlist = makeCategoryMenus
+    .filter((menu) => !NORMALIZED_MAKE_ALLOWLIST.has(normalizeMenuName(menu.name)))
+    .map((menu) => menu.name);
+
+  console.info('[DecisionEngine] make-mode filtering snapshot', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
+    totalMenusCount,
+    afterCategoryFilterCount,
+    makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
+  });
+
+  if (allowlistedCount > 0) {
+    return allowlistedMenus;
+  }
+
+  console.error('[DecisionEngine] make-quick allowlist produced 0 menus; applying fallback', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
+    totalMenusCount,
+    afterCategoryFilterCount,
+    makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
+    allowlistNotInMenuDatabase,
+    menuDatabaseNotInAllowlist,
+    activeFilter: 'category=만들어먹기 + normalized allowlist',
+  });
+
+  if (afterCategoryFilterCount > 0) {
+    console.warn('[DecisionEngine] fallback #1: using make-category menus without allowlist');
+    return makeCategoryMenus;
+  }
+
+  console.error('[DecisionEngine] fallback #2: make category empty, using full menu pool');
+  return menus;
+}
+
+
+function getSoloMakeFixedResult(input: DecisionInput): DecisionResult {
+  const fixedMenus = getMakeCategoryMenus(menuDatabase);
+  console.info('[SOLO MAKE FIXED MODE]', fixedMenus.length, {
+    who: input.who,
+    how: input.how,
+    outdoor: input.outdoor,
+  });
+
+  const selectedMenu = selectDiverseMenu(fixedMenus, input.excludeMenu);
+  return buildResult(input.who, input.how, input.outdoor, selectedMenu, generateReason(input.who, selectedMenu));
+}
+
 // Decision modes
 export type DecisionMode = 'random' | 'personalized';
 
@@ -67,7 +191,8 @@ function getRecentMenuNames(count: number = 5): string[] {
 // 최근 메뉴를 제외한 다양한 메뉴 선택 (개선된 랜덤)
 function selectDiverseMenu(availableMenus: MenuItem[], excludeMenu?: string): MenuItem {
   if (availableMenus.length === 0) {
-    throw new Error('No available menus');
+    console.error('[DecisionEngine] selectDiverseMenu received 0 menus, fallback to full menuDatabase');
+    return getRandomItem(menuDatabase);
   }
   
   // 1. 명시적으로 제외할 메뉴 필터링
@@ -276,7 +401,7 @@ function buildResult(
     actions: [],
   };
 
-  if (how === '만들어 먹기') {
+  if (isMakeHow(how)) {
     result.ingredients = selectedMenu.ingredients || [];
 
     result.actions = [
@@ -341,8 +466,8 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor: input.outdoor, mode: 'personalized' });
   }
 
   if (excludeMenu) {
@@ -375,6 +500,10 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
 export function makeDecision(input: DecisionInput, opts?: DecisionOptions): DecisionResult {
   const mode = opts?.mode || 'random';
 
+  if (input.who === '나 혼자' && isMakeHow(input.how)) {
+    return getSoloMakeFixedResult(input);
+  }
+
   if (mode === 'personalized') {
     return makePersonalizedDecision(input);
   }
@@ -384,8 +513,8 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor, mode });
   }
 
   // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리
