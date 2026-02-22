@@ -538,9 +538,13 @@ if (excludedDetailedMenus.length > 0) {
 }
 
 // 상세 메뉴는 baseMenuDatabase에 존재하는 항목만 보강
-export const menuDatabase: MenuItem[] = baseMenuDatabase.map(
-  (menu) => detailedMenuMap.get(menu.name) ?? menu
-);
+// 이미지 경로는 base(슬러그) 우선, 상세 정의가 있으면 상세 값을 사용
+export const menuDatabase: MenuItem[] = baseMenuDatabase.map((menu) => {
+  const detailed = detailedMenuMap.get(menu.name);
+  return detailed
+    ? { ...menu, ...detailed, image: detailed.image || menu.image }
+    : menu;
+});
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
