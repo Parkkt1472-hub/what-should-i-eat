@@ -64,7 +64,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
   // Get image from menuDatabase instead of constructing path
   const getMenuImage = (menuName: string): string => {
     const menuItem = menuDatabase.find((m: any) => m.name === menuName);
-    return menuItem?.image || '/menus/placeholder.jpg';
+    return menuItem?.image || '/images/make/placeholder.svg';
   };
 
   // 날씨 정보 가져오기 + 익명 ID 초기화
@@ -346,7 +346,7 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
                 loading="eager"
                 onError={(e) => {
                   console.error('[Image Error]', result.menu, e.currentTarget.src);
-                  e.currentTarget.src = '/menus/placeholder.jpg';
+                  e.currentTarget.src = '/images/make/placeholder.svg';
                   setImageError(true);
                 }}
               />

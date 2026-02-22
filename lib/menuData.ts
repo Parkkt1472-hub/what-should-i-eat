@@ -71,6 +71,7 @@ import { menuDatabase as newMenuDatabase, MenuItem as NewMenuItem, EXOTIC_KEYWOR
 
 // 기존 인터페이스 유지 (호환성)
 export interface MenuItem {
+  id?: string;
   name: string;
   category: string;
   ingredients?: string[];
@@ -80,6 +81,7 @@ export interface MenuItem {
   meta?: MenuMeta; // personalized 추천용 메타데이터
   image?: string; // 이미지 경로
   quickRecipes?: string[]; // 만들어먹기 전용 한 줄 레시피
+  tags?: string[];
 }
 
 // 새 DB를 기존 형식으로 변환
@@ -304,227 +306,42 @@ const detailedMenus: MenuItem[] = [
     meta: { spicy: 1, soup: 0, rice: false, noodle: false, meat: 3, seafood: 0, veg: 0, time: 0, budget: 2, tags: ['패스트푸드', '튀김', '배달', '파티'] }
   },
   
-  // 🍳 만들어먹기 (5분컷 초간단 집냉장고 요리) - 20개
-  {
-    name: '참치마요덮밥', category: '만들어먹기',
-    ingredients: ['참치캔', '마요네즈', '김가루', '밥'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: true, noodle: false, meat: 0, seafood: 2, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '밥에 참치+마요+김가루 비비면 끝',
-      '참치 기름 빼고 마요 섞어서 밥에 올리기',
-      '참치캔 하나면 든든한 한 끼 완성'
-    ]
-  },
-  {
-    name: '김치계란덮밥', category: '만들어먹기',
-    ingredients: ['김치', '계란', '밥', '참기름'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 0, rice: true, noodle: false, meat: 0, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '김치 볶고 계란 올리면 완성',
-      '프라이팬에 김치+계란 후라이 얹기',
-      '김치 썰어 볶다가 계란 풀어넣기'
-    ]
-  },
-  {
-    name: '간장계란밥', category: '만들어먹기',
-    ingredients: ['계란', '간장', '밥', '참기름'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: true, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '계란 프라이 + 간장 한 스푼',
-      '밥에 계란 얹고 간장 둘러주기',
-      '반숙 계란 터뜨려 간장에 비비기'
-    ]
-  },
-  {
-    name: '버터간장밥', category: '만들어먹기',
-    ingredients: ['버터', '간장', '밥', '김가루'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: true, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '뜨거운 밥에 버터+간장 넣고 비비기',
-      '버터 녹이고 간장 섞어서 밥 볶기',
-      '밥에 버터 올리고 간장 둘러 비빔'
-    ]
-  },
-  {
-    name: '카레라이스(즉석카레)', category: '만들어먹기',
-    ingredients: ['즉석카레', '밥'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 1, rice: true, noodle: false, meat: 1, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '즉석카레 데워서 밥에 부으면 끝',
-      '레토르트 카레 3분이면 한 끼 완성',
-      '전자레인지 2분 + 밥 = 카레라이스'
-    ]
-  },
-  {
-    name: '고추장참치비빔밥', category: '만들어먹기',
-    ingredients: ['참치캔', '고추장', '밥', '김가루', '참기름'],
-    familyFriendly: true, spicyLevel: 2, difficulty: '초간단',
-    meta: { spicy: 2, soup: 0, rice: true, noodle: false, meat: 0, seafood: 2, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '참치+고추장+참기름 비비면 완성',
-      '밥에 참치 올리고 고추장 한 스푼',
-      '매콤한 참치비빔밥 5분 완성'
-    ]
-  },
-  {
-    name: '소세지야채볶음밥', category: '만들어먹기',
-    ingredients: ['소세지', '냉동야채', '밥', '간장'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: true, noodle: false, meat: 2, seafood: 0, veg: 2, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '소세지 썰어 볶다가 밥 넣기',
-      '냉동야채+소세지 볶고 간장 한 스푼',
-      '한 팬에 재료 다 넣고 볶으면 끝'
-    ]
-  },
-  {
-    name: '베이컨김치볶음밥', category: '만들어먹기',
-    ingredients: ['베이컨', '김치', '밥', '참기름'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 0, rice: true, noodle: false, meat: 2, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '베이컨+김치 볶다가 밥 넣기',
-      '기름 필요없이 베이컨에서 나온 기름으로',
-      '한 팬 볶음밥 5분 완성'
-    ]
-  },
-  {
-    name: '라면계란볶이', category: '만들어먹기',
-    ingredients: ['라면', '계란', '대파', '스프'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 0, rice: false, noodle: true, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '라면 삶아서 물 버리고 스프에 볶기',
-      '계란 풀어넣고 볶으면 고소한 맛',
-      '물 조금만 남기고 볶으면 쫄깃'
-    ]
-  },
-  {
-    name: '비빔라면 + 계란후라이', category: '만들어먹기',
-    ingredients: ['라면', '계란', '스프', '참기름'],
-    familyFriendly: true, spicyLevel: 2, difficulty: '초간단',
-    meta: { spicy: 2, soup: 0, rice: false, noodle: true, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '라면 삶아 물 버리고 스프 비비기',
-      '계란 후라이 올리면 비주얼까지',
-      '매콤한 비빔라면 3분 완성'
-    ]
-  },
-  {
-    name: '참치라면', category: '만들어먹기',
-    ingredients: ['라면', '참치캔', '대파', '스프'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 2, rice: false, noodle: true, meat: 0, seafood: 2, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '라면 끓일 때 참치 넣으면 끝',
-      '참치 기름이 국물에 고소함 추가',
-      '참치캔 하나로 라면 업그레이드'
-    ]
-  },
-  {
-    name: '우동면 간장볶음', category: '만들어먹기',
-    ingredients: ['우동면', '간장', '야채', '참기름'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: true, meat: 0, seafood: 0, veg: 2, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '우동면 삶아서 간장에 볶기',
-      '야채 있으면 같이 볶으면 더 맛있어',
-      '참기름 둘러 고소하게 마무리'
-    ]
-  },
-  {
-    name: '치즈토스트', category: '만들어먹기',
-    ingredients: ['식빵', '치즈', '버터'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '식빵에 치즈 넣고 토스트기에',
-      '버터 발라 팬에 구우면 더 고소',
-      '치즈 녹으면 완성, 3분 완성'
-    ]
-  },
-  {
-    name: '햄치즈롤(식빵말이)', category: '만들어먹기',
-    ingredients: ['식빵', '햄', '치즈'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 1, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '식빵에 햄+치즈 넣고 말아서 팬에',
-      '돌돌 말아 이쑤시개로 고정',
-      '노릇노릇 구우면 간식 완성'
-    ]
-  },
-  {
-    name: '계란마요토스트', category: '만들어먹기',
-    ingredients: ['식빵', '계란', '마요네즈'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '계란 삶아서 으깨고 마요 섞기',
-      '식빵에 발라서 구우면 끝',
-      '에그마요 샌드위치 5분 완성'
-    ]
-  },
-  {
-    name: '프렌치토스트', category: '만들어먹기',
-    ingredients: ['식빵', '계란', '우유', '설탕'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '계란+우유 섞어 식빵 적셔 굽기',
-      '달콤한 브런치 5분 완성',
-      '설탕 뿌려 캐러멜라이즈까지'
-    ]
-  },
-  {
-    name: '두부부침', category: '만들어먹기',
-    ingredients: ['두부', '간장', '참기름', '대파'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '두부 썰어 팬에 노릇하게 굽기',
-      '간장 양념장 찍어먹으면 꿀맛',
-      '단백질 가득 건강한 한 끼'
-    ]
-  },
-  {
-    name: '김치두부', category: '만들어먹기',
-    ingredients: ['두부', '김치', '참기름', '대파'],
-    familyFriendly: true, spicyLevel: 1, difficulty: '초간단',
-    meta: { spicy: 1, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 2, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '두부 썰어 김치랑 같이 볶기',
-      '참기름 둘러 고소하게 마무리',
-      '매콤한 김치두부 5분 완성'
-    ]
-  },
-  {
-    name: '참치김치찌개', category: '만들어먹기',
-    ingredients: ['참치캔', '김치', '두부', '대파'],
-    familyFriendly: true, spicyLevel: 2, difficulty: '초간단',
-    meta: { spicy: 2, soup: 2, rice: true, noodle: false, meat: 0, seafood: 2, veg: 1, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '김치+참치+물 끓이면 끝',
-      '참치 기름이 국물을 감칠맛나게',
-      '두부 넣고 5분이면 찌개 완성'
-    ]
-  },
-  {
-    name: '계란말이', category: '만들어먹기',
-    ingredients: ['계란', '대파', '소금', '참기름'],
-    familyFriendly: true, spicyLevel: 0, difficulty: '초간단',
-    meta: { spicy: 0, soup: 0, rice: false, noodle: false, meat: 0, seafood: 0, veg: 0, time: 0, budget: 0, tags: ['5분컷', '냉장고', '간단'] },
-    quickRecipes: [
-      '계란 풀어 팬에 부어 말기',
-      '대파 다져 넣으면 향긋',
-      '단백질 폭탄 반찬 5분 완성'
-    ]
-  },
+  // 🍳 만들어먹기 (신규 고정 목록)
+  { id: 'ganjang-egg-rice', name: '간장계란밥', category: '만들어먹기', image: '/images/make/ganjang-egg-rice.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'spam-mayo-rice-bowl', name: '스팸마요덮밥', category: '만들어먹기', image: '/images/make/spam-mayo-rice-bowl.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'tuna-mayo-bibimbap', name: '참치마요비빔밥', category: '만들어먹기', image: '/images/make/tuna-mayo-bibimbap.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'thin-pork-bowl', name: '대패삼겹살 덮밥', category: '만들어먹기', image: '/images/make/thin-pork-bowl.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 1, difficulty: '초간단' },
+  { id: 'pollock-avocado-bibimbap', name: '명란아보카도 비빔밥', category: '만들어먹기', image: '/images/make/pollock-avocado-bibimbap.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 1, difficulty: '초간단' },
+  { id: 'gochujang-tuna-bibimbap', name: '고추장 참치 비빔밥', category: '만들어먹기', image: '/images/make/gochujang-tuna-bibimbap.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'curry-rice', name: '카레', category: '만들어먹기', image: '/images/make/curry-rice.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 1, difficulty: '초간단' },
+  { id: 'hayashi-rice', name: '하이라이스', category: '만들어먹기', image: '/images/make/hayashi-rice.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'gangdoenjang-bibimbap', name: '강된장 비빔밥', category: '만들어먹기', image: '/images/make/gangdoenjang-bibimbap.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 1, difficulty: '초간단' },
+  { id: 'mapo-tofu-rice-bowl', name: '마파두부 덮밥', category: '만들어먹기', image: '/images/make/mapo-tofu-rice-bowl.jpg', tags: ['덮밥/비빔밥'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+
+  { id: 'kimchi-fried-rice', name: '김치볶음밥', category: '만들어먹기', image: '/images/make/kimchi-fried-rice.jpg', tags: ['볶음밥/구이'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'egg-fried-rice', name: '계란볶음밥', category: '만들어먹기', image: '/images/make/egg-fried-rice.jpg', tags: ['볶음밥/구이'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'shrimp-fried-rice', name: '새우볶음밥', category: '만들어먹기', image: '/images/make/shrimp-fried-rice.jpg', tags: ['볶음밥/구이'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'bacon-garlic-fried-rice', name: '베이컨 마늘 볶음밥', category: '만들어먹기', image: '/images/make/bacon-garlic-fried-rice.jpg', tags: ['볶음밥/구이'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'spam-grilled-rice', name: '스팸 구이와 흰쌀밥', category: '만들어먹기', image: '/images/make/spam-grilled-rice.jpg', tags: ['볶음밥/구이'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+
+  { id: 'bibim-guksu', name: '비빔국수', category: '만들어먹기', image: '/images/make/bibim-guksu.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'soy-bibim-guksu', name: '간장비빔국수', category: '만들어먹기', image: '/images/make/soy-bibim-guksu.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'aglio-olio', name: '알리오올리오', category: '만들어먹기', image: '/images/make/aglio-olio.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'kimchi-bibim-guksu', name: '김치비빔국수', category: '만들어먹기', image: '/images/make/kimchi-bibim-guksu.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'buldak-getti', name: '불닭게티', category: '만들어먹기', image: '/images/make/buldak-getti.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 3, difficulty: '초간단' },
+  { id: 'janchi-guksu', name: '잔치국수', category: '만들어먹기', image: '/images/make/janchi-guksu.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'kong-guksu', name: '콩국수', category: '만들어먹기', image: '/images/make/kong-guksu.jpg', tags: ['면 요리'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+
+  { id: 'tuna-kimchi-jjigae', name: '참치 김치찌개', category: '만들어먹기', image: '/images/make/tuna-kimchi-jjigae.jpg', tags: ['국물/찌개'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'spam-budae-jjigae', name: '스팸 부대찌개', category: '만들어먹기', image: '/images/make/spam-budae-jjigae.jpg', tags: ['국물/찌개'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'sundubu-jjigae', name: '순두부찌개', category: '만들어먹기', image: '/images/make/sundubu-jjigae.jpg', tags: ['국물/찌개'], familyFriendly: true, spicyLevel: 2, difficulty: '초간단' },
+  { id: 'eomuk-tang', name: '어묵탕', category: '만들어먹기', image: '/images/make/eomuk-tang.jpg', tags: ['국물/찌개'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'tteok-mandu-guk', name: '떡만두국', category: '만들어먹기', image: '/images/make/tteok-mandu-guk.jpg', tags: ['국물/찌개'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+
+  { id: 'kimchi-jeon', name: '김치전', category: '만들어먹기', image: '/images/make/kimchi-jeon.jpg', tags: ['간단 별미'], familyFriendly: true, spicyLevel: 1, difficulty: '초간단' },
+  { id: 'rolled-omelet', name: '계란말이', category: '만들어먹기', image: '/images/make/rolled-omelet.jpg', tags: ['간단 별미'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+  { id: 'corn-cheese', name: '콘치즈', category: '만들어먹기', image: '/images/make/corn-cheese.jpg', tags: ['간단 별미'], familyFriendly: true, spicyLevel: 0, difficulty: '초간단' },
+
 ];
 
 const normalizeMenuKey = (value: string): string =>

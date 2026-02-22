@@ -8,26 +8,36 @@ type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
 
 const FIVE_MINUTE_HOME_MENU_NAMES = new Set([
-  '참치마요덮밥',
-  '김치계란덮밥',
   '간장계란밥',
-  '버터간장밥',
-  '카레라이스(즉석카레)',
-  '고추장참치비빔밥',
-  '소세지야채볶음밥',
-  '베이컨김치볶음밥',
-  '라면계란볶이',
-  '비빔라면 + 계란후라이',
-  '참치라면',
-  '우동면 간장볶음',
-  '치즈토스트',
-  '햄치즈롤(식빵말이)',
-  '계란마요토스트',
-  '프렌치토스트',
-  '두부부침',
-  '김치두부',
-  '참치김치찌개',
+  '스팸마요덮밥',
+  '참치마요비빔밥',
+  '대패삼겹살 덮밥',
+  '명란아보카도 비빔밥',
+  '고추장 참치 비빔밥',
+  '카레',
+  '하이라이스',
+  '강된장 비빔밥',
+  '마파두부 덮밥',
+  '김치볶음밥',
+  '계란볶음밥',
+  '새우볶음밥',
+  '베이컨 마늘 볶음밥',
+  '스팸 구이와 흰쌀밥',
+  '비빔국수',
+  '간장비빔국수',
+  '알리오올리오',
+  '김치비빔국수',
+  '불닭게티',
+  '잔치국수',
+  '콩국수',
+  '참치 김치찌개',
+  '스팸 부대찌개',
+  '순두부찌개',
+  '어묵탕',
+  '떡만두국',
+  '김치전',
   '계란말이',
+  '콘치즈',
 ]);
 
 const normalizeMenuName = (s: string): string =>
@@ -109,6 +119,19 @@ function resolveMakeMenusWithFallback(
 
   console.error('[DecisionEngine] fallback #2: make category empty, using full menu pool');
   return menus;
+}
+
+
+function getSoloMakeFixedResult(input: DecisionInput): DecisionResult {
+  const fixedMenus = getMakeCategoryMenus(menuDatabase);
+  console.info('[SOLO MAKE FIXED MODE]', fixedMenus.length, {
+    who: input.who,
+    how: input.how,
+    outdoor: input.outdoor,
+  });
+
+  const selectedMenu = selectDiverseMenu(fixedMenus, input.excludeMenu);
+  return buildResult(input.who, input.how, input.outdoor, selectedMenu, generateReason(input.who, selectedMenu));
 }
 
 // Decision modes
@@ -480,6 +503,10 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
 // Main decision function with mode support
 export function makeDecision(input: DecisionInput, opts?: DecisionOptions): DecisionResult {
   const mode = opts?.mode || 'random';
+
+  if (input.who === '나 혼자' && isMakeHow(input.how)) {
+    return getSoloMakeFixedResult(input);
+  }
 
   if (mode === 'personalized') {
     return makePersonalizedDecision(input);
