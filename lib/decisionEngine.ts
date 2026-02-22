@@ -33,6 +33,13 @@ const FIVE_MINUTE_HOME_MENU_NAMES = new Set([
 const normalizeMenuName = (s: string): string =>
   s.replace(/\s+/g, '').replace(/[+()]/g, '').toLowerCase();
 
+const normalizeHowValue = (value: string): string => normalizeMenuName(value);
+
+const isMakeHow = (how: string): boolean => {
+  const normalized = normalizeHowValue(how);
+  return normalized === '만들어먹기' || normalized === 'cook';
+};
+
 const MAKE_CATEGORY_NORMALIZED = normalizeMenuName('만들어먹기');
 const NORMALIZED_MAKE_ALLOWLIST = new Set(
   Array.from(FIVE_MINUTE_HOME_MENU_NAMES).map((name) => normalizeMenuName(name))
@@ -48,8 +55,11 @@ function filterFiveMinuteHomeMenus(menus: MenuItem[]): MenuItem[] {
   );
 }
 
-function resolveMakeMenusWithFallback(menus: MenuItem[], selectedCategory: HowType): MenuItem[] {
-  if (selectedCategory !== '만들어 먹기') return menus;
+function resolveMakeMenusWithFallback(
+  menus: MenuItem[],
+  context: { who: WhoType; how: string; outdoor: OutdoorType | null; mode: DecisionMode }
+): MenuItem[] {
+  if (!isMakeHow(context.how)) return menus;
 
   const totalMenusCount = menus.length;
   const makeCategoryMenus = getMakeCategoryMenus(menus);
@@ -69,24 +79,35 @@ function resolveMakeMenusWithFallback(menus: MenuItem[], selectedCategory: HowTy
     .filter((menu) => !NORMALIZED_MAKE_ALLOWLIST.has(normalizeMenuName(menu.name)))
     .map((menu) => menu.name);
 
-  console.error('[DecisionEngine] make-quick allowlist produced 0 menus; applying fallback', {
-    selectedCategory,
+  console.info('[DecisionEngine] make-mode filtering snapshot', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
     totalMenusCount,
     afterCategoryFilterCount,
     makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
+  });
+
+  if (allowlistedCount > 0) {
+    return allowlistedMenus;
+  }
+
+  console.error('[DecisionEngine] make-quick allowlist produced 0 menus; applying fallback', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
+    totalMenusCount,
+    afterCategoryFilterCount,
+    makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
     allowlistNotInMenuDatabase,
     menuDatabaseNotInAllowlist,
+    activeFilter: 'category=만들어먹기 + normalized allowlist',
   });
 
   if (afterCategoryFilterCount > 0) {
+    console.warn('[DecisionEngine] fallback #1: using make-category menus without allowlist');
     return makeCategoryMenus;
   }
 
-  console.error('[DecisionEngine] make category menus are also empty; fallback to full menu pool', {
-    selectedCategory,
-    totalMenusCount,
-  });
-
+  console.error('[DecisionEngine] fallback #2: make category empty, using full menu pool');
   return menus;
 }
 
@@ -361,7 +382,7 @@ function buildResult(
     actions: [],
   };
 
-  if (how === '만들어 먹기') {
+  if (isMakeHow(how)) {
     result.ingredients = selectedMenu.ingredients || [];
 
     result.actions = [
@@ -426,8 +447,8 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = resolveMakeMenusWithFallback(availableMenus, how);
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor: input.outdoor, mode: 'personalized' });
   }
 
   if (excludeMenu) {
@@ -469,8 +490,8 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = resolveMakeMenusWithFallback(availableMenus, how);
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor, mode });
   }
 
   // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리

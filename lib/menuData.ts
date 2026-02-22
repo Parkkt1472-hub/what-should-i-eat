@@ -527,24 +527,41 @@ const detailedMenus: MenuItem[] = [
   },
 ];
 
-const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
-const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
-const excludedDetailedMenus = detailedMenus
-  .filter((menu) => !baseMenuNameSet.has(menu.name))
-  .map((menu) => menu.name);
+const normalizeMenuKey = (value: string): string =>
+  String(value).replace(/\s+/g, '').replace(/[+()]/g, '').toLowerCase();
 
-if (excludedDetailedMenus.length > 0) {
-  console.info('[menuData] Excluded detailedMenus not present in baseMenuDatabase:', excludedDetailedMenus);
+const detailedMenuByKey = new Map(detailedMenus.map((menu) => [normalizeMenuKey(menu.name), menu]));
+const baseMenuByKey = new Map(baseMenuDatabase.map((menu) => [normalizeMenuKey(menu.name), menu]));
+
+const unmatchedDetailedMenus = detailedMenus.filter(
+  (menu) => !baseMenuByKey.has(normalizeMenuKey(menu.name))
+);
+
+if (unmatchedDetailedMenus.length > 0) {
+  console.info('[menuData] Unmatched detailedMenus (added as additional menus):', unmatchedDetailedMenus.map((menu) => menu.name));
+  console.info(
+    '[menuData] Unmatched detailedMenus key samples:',
+    unmatchedDetailedMenus.slice(0, 5).map((menu) => ({
+      name: menu.name,
+      normalizedKey: normalizeMenuKey(menu.name),
+      category: menu.category,
+    }))
+  );
 }
 
-// 상세 메뉴는 baseMenuDatabase에 존재하는 항목만 보강
-// 이미지 경로는 base(슬러그) 우선, 상세 정의가 있으면 상세 값을 사용
-export const menuDatabase: MenuItem[] = baseMenuDatabase.map((menu) => {
-  const detailed = detailedMenuMap.get(menu.name);
+const mergedBaseMenus = baseMenuDatabase.map((menu) => {
+  const detailed = detailedMenuByKey.get(normalizeMenuKey(menu.name));
   return detailed
     ? { ...menu, ...detailed, image: detailed.image || menu.image }
     : menu;
 });
+
+const additionalDetailedMenus = detailedMenus.filter(
+  (menu) => !baseMenuByKey.has(normalizeMenuKey(menu.name))
+);
+
+// 상세 메뉴는 base를 우선 보강하고, base에 없는 상세 메뉴는 추가해 후보 0개를 방지
+export const menuDatabase: MenuItem[] = [...mergedBaseMenus, ...additionalDetailedMenus];
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
