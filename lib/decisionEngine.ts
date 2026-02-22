@@ -6,6 +6,107 @@ type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
 type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
+
+const FIVE_MINUTE_HOME_MENU_NAMES = new Set([
+  '참치마요덮밥',
+  '김치계란덮밥',
+  '간장계란밥',
+  '버터간장밥',
+  '카레라이스(즉석카레)',
+  '고추장참치비빔밥',
+  '소세지야채볶음밥',
+  '베이컨김치볶음밥',
+  '라면계란볶이',
+  '비빔라면 + 계란후라이',
+  '참치라면',
+  '우동면 간장볶음',
+  '치즈토스트',
+  '햄치즈롤(식빵말이)',
+  '계란마요토스트',
+  '프렌치토스트',
+  '두부부침',
+  '김치두부',
+  '참치김치찌개',
+  '계란말이',
+]);
+
+const normalizeMenuName = (s: string): string =>
+  s.replace(/\s+/g, '').replace(/[+()]/g, '').toLowerCase();
+
+const normalizeHowValue = (value: string): string => normalizeMenuName(value);
+
+const isMakeHow = (how: string): boolean => {
+  const normalized = normalizeHowValue(how);
+  return normalized === '만들어먹기' || normalized === 'cook';
+};
+
+const MAKE_CATEGORY_NORMALIZED = normalizeMenuName('만들어먹기');
+const NORMALIZED_MAKE_ALLOWLIST = new Set(
+  Array.from(FIVE_MINUTE_HOME_MENU_NAMES).map((name) => normalizeMenuName(name))
+);
+
+function getMakeCategoryMenus(menus: MenuItem[]): MenuItem[] {
+  return menus.filter((menu) => normalizeMenuName(menu.category) === MAKE_CATEGORY_NORMALIZED);
+}
+
+function filterFiveMinuteHomeMenus(menus: MenuItem[]): MenuItem[] {
+  return getMakeCategoryMenus(menus).filter((menu) =>
+    NORMALIZED_MAKE_ALLOWLIST.has(normalizeMenuName(menu.name))
+  );
+}
+
+function resolveMakeMenusWithFallback(
+  menus: MenuItem[],
+  context: { who: WhoType; how: string; outdoor: OutdoorType | null; mode: DecisionMode }
+): MenuItem[] {
+  if (!isMakeHow(context.how)) return menus;
+
+  const totalMenusCount = menus.length;
+  const makeCategoryMenus = getMakeCategoryMenus(menus);
+  const afterCategoryFilterCount = makeCategoryMenus.length;
+  const allowlistedMenus = filterFiveMinuteHomeMenus(menus);
+  const allowlistedCount = allowlistedMenus.length;
+
+  const categoryNormalizedNames = new Set(makeCategoryMenus.map((menu) => normalizeMenuName(menu.name)));
+  const allowlistNotInMenuDatabase = Array.from(FIVE_MINUTE_HOME_MENU_NAMES).filter(
+    (name) => !categoryNormalizedNames.has(normalizeMenuName(name))
+  );
+  const menuDatabaseNotInAllowlist = makeCategoryMenus
+    .filter((menu) => !NORMALIZED_MAKE_ALLOWLIST.has(normalizeMenuName(menu.name)))
+    .map((menu) => menu.name);
+
+  console.info('[DecisionEngine] make-mode filtering snapshot', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
+    totalMenusCount,
+    afterCategoryFilterCount,
+    makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
+  });
+
+  if (allowlistedCount > 0) {
+    return allowlistedMenus;
+  }
+
+  console.error('[DecisionEngine] make-quick allowlist produced 0 menus; applying fallback', {
+    input: { who: context.who, how: context.how, outdoor: context.outdoor, mode: context.mode },
+    totalMenusCount,
+    afterCategoryFilterCount,
+    makeQuickAllowlistCount: allowlistedCount,
+    finalAvailableMenusCount: allowlistedCount,
+    allowlistNotInMenuDatabase,
+    menuDatabaseNotInAllowlist,
+    activeFilter: 'category=만들어먹기 + normalized allowlist',
+  });
+
+  if (afterCategoryFilterCount > 0) {
+    console.warn('[DecisionEngine] fallback #1: using make-category menus without allowlist');
+    return makeCategoryMenus;
+  }
+
+  console.error('[DecisionEngine] fallback #2: make category empty, using full menu pool');
+  return menus;
+}
+
 // Decision modes
 export type DecisionMode = 'random' | 'personalized';
 
@@ -67,7 +168,8 @@ function getRecentMenuNames(count: number = 5): string[] {
 // 최근 메뉴를 제외한 다양한 메뉴 선택 (개선된 랜덤)
 function selectDiverseMenu(availableMenus: MenuItem[], excludeMenu?: string): MenuItem {
   if (availableMenus.length === 0) {
-    throw new Error('No available menus');
+    console.error('[DecisionEngine] selectDiverseMenu received 0 menus, fallback to full menuDatabase');
+    return getRandomItem(menuDatabase);
   }
   
   // 1. 명시적으로 제외할 메뉴 필터링
@@ -276,7 +378,7 @@ function buildResult(
     actions: [],
   };
 
-  if (how === '만들어 먹기') {
+  if (isMakeHow(how)) {
     result.ingredients = selectedMenu.ingredients || [];
 
     result.actions = [
@@ -341,8 +443,8 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor: input.outdoor, mode: 'personalized' });
   }
 
   if (excludeMenu) {
@@ -384,8 +486,8 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
   let availableMenus = filterMenuByContext(who);
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
-  if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+  if (isMakeHow(how)) {
+    availableMenus = resolveMakeMenusWithFallback(availableMenus, { who, how, outdoor, mode });
   }
 
   // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리

@@ -96,8 +96,8 @@ function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
   };
 }
 
-// 기존 코드 호환성을 위해 export
-export const menuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
+// 기존 코드 호환성을 위한 기본 데이터 (아래에서 상세 메뉴와 병합 후 export)
+const baseMenuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
 
 // 이색 키워드도 export
 export { EXOTIC_KEYWORDS };
@@ -145,6 +145,7 @@ const detailedMenus: MenuItem[] = [
     name: '김치볶음밥', category: '한식', 
     ingredients: ['김치', '밥', '계란', '대파', '참기름'], 
     familyFriendly: true, spicyLevel: 2, difficulty: '쉬움',
+    image: '/menus/kimchi-bokkeumbap.jpg',
     meta: { spicy: 2, soup: 0, rice: true, noodle: false, meat: 1, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['한식', '간편', '매운'] }
   },
   { 
@@ -525,6 +526,42 @@ const detailedMenus: MenuItem[] = [
     ]
   },
 ];
+
+const normalizeMenuKey = (value: string): string =>
+  String(value).replace(/\s+/g, '').replace(/[+()]/g, '').toLowerCase();
+
+const detailedMenuByKey = new Map(detailedMenus.map((menu) => [normalizeMenuKey(menu.name), menu]));
+const baseMenuByKey = new Map(baseMenuDatabase.map((menu) => [normalizeMenuKey(menu.name), menu]));
+
+const unmatchedDetailedMenus = detailedMenus.filter(
+  (menu) => !baseMenuByKey.has(normalizeMenuKey(menu.name))
+);
+
+if (unmatchedDetailedMenus.length > 0) {
+  console.info('[menuData] Unmatched detailedMenus (added as additional menus):', unmatchedDetailedMenus.map((menu) => menu.name));
+  console.info(
+    '[menuData] Unmatched detailedMenus key samples:',
+    unmatchedDetailedMenus.slice(0, 5).map((menu) => ({
+      name: menu.name,
+      normalizedKey: normalizeMenuKey(menu.name),
+      category: menu.category,
+    }))
+  );
+}
+
+const mergedBaseMenus = baseMenuDatabase.map((menu) => {
+  const detailed = detailedMenuByKey.get(normalizeMenuKey(menu.name));
+  return detailed
+    ? { ...menu, ...detailed, image: detailed.image || menu.image }
+    : menu;
+});
+
+const additionalDetailedMenus = detailedMenus.filter(
+  (menu) => !baseMenuByKey.has(normalizeMenuKey(menu.name))
+);
+
+// 상세 메뉴는 base를 우선 보강하고, base에 없는 상세 메뉴는 추가해 후보 0개를 방지
+export const menuDatabase: MenuItem[] = [...mergedBaseMenus, ...additionalDetailedMenus];
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
