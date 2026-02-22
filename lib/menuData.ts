@@ -527,6 +527,7 @@ const detailedMenus: MenuItem[] = [
 ];
 
 const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
+
 const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
 const excludedDetailedMenus = detailedMenus
   .filter((menu) => !baseMenuNameSet.has(menu.name))
