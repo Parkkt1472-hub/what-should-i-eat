@@ -96,8 +96,8 @@ function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
   };
 }
 
-// 기존 코드 호환성을 위해 export
-export const menuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
+// 기존 코드 호환성을 위한 기본 데이터 (아래에서 상세 메뉴와 병합 후 export)
+const baseMenuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
 
 // 이색 키워드도 export
 export { EXOTIC_KEYWORDS };
@@ -145,6 +145,7 @@ const detailedMenus: MenuItem[] = [
     name: '김치볶음밥', category: '한식', 
     ingredients: ['김치', '밥', '계란', '대파', '참기름'], 
     familyFriendly: true, spicyLevel: 2, difficulty: '쉬움',
+    image: '/menus/kimchi-bokkeumbap.jpg',
     meta: { spicy: 2, soup: 0, rice: true, noodle: false, meat: 1, seafood: 0, veg: 1, time: 0, budget: 0, tags: ['한식', '간편', '매운'] }
   },
   { 
@@ -525,6 +526,25 @@ const detailedMenus: MenuItem[] = [
     ]
   },
 ];
+
+const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
+const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
+const excludedDetailedMenus = detailedMenus
+  .filter((menu) => !baseMenuNameSet.has(menu.name))
+  .map((menu) => menu.name);
+
+if (excludedDetailedMenus.length > 0) {
+  console.info('[menuData] Excluded detailedMenus not present in baseMenuDatabase:', excludedDetailedMenus);
+}
+
+// 상세 메뉴는 baseMenuDatabase에 존재하는 항목만 보강
+// 이미지 경로는 base(슬러그) 우선, 상세 정의가 있으면 상세 값을 사용
+export const menuDatabase: MenuItem[] = baseMenuDatabase.map((menu) => {
+  const detailed = detailedMenuMap.get(menu.name);
+  return detailed
+    ? { ...menu, ...detailed, image: detailed.image || menu.image }
+    : menu;
+});
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
