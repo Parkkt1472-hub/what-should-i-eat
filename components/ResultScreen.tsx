@@ -50,6 +50,17 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
 
   const mode = useMemo(() => (data?.preferences ? 'personalized' : 'random'), [data]);
 
+  const handleGoBack = () => {
+    playClickSound();
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    onBackToHome();
+  };
+
   // Get image from menuDatabase instead of constructing path
   const getMenuImage = (menuName: string): string => {
     const menuItem = menuDatabase.find((m: any) => m.name === menuName);
@@ -537,10 +548,10 @@ export default function ResultScreen({ data, onBackToHome }: ResultScreenProps) 
             {data?.how === '외식' && <LocalSubmissions />}
 
             <button
-              onClick={() => { playClickSound(); onBackToHome(); }}
+              onClick={handleGoBack}
               className="mt-4 w-full py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition-all"
             >
-              🏠 처음으로 돌아가기
+              🏠 뒤로가기
             </button>
           </div>
         </div>

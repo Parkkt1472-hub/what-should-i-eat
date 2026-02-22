@@ -96,8 +96,8 @@ function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
   };
 }
 
-// 기존 코드 호환성을 위해 export
-export const menuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
+// 기존 코드 호환성을 위한 기본 데이터 (아래에서 상세 메뉴와 병합 후 export)
+const baseMenuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
 
 // 이색 키워드도 export
 export { EXOTIC_KEYWORDS };
@@ -525,6 +525,21 @@ const detailedMenus: MenuItem[] = [
     ]
   },
 ];
+
+const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
+const baseMenuNameSet = new Set(baseMenuDatabase.map((menu) => menu.name));
+const excludedDetailedMenus = detailedMenus
+  .filter((menu) => !baseMenuNameSet.has(menu.name))
+  .map((menu) => menu.name);
+
+if (excludedDetailedMenus.length > 0) {
+  console.info('[menuData] Excluded detailedMenus not present in baseMenuDatabase:', excludedDetailedMenus);
+}
+
+// 상세 메뉴는 baseMenuDatabase에 존재하는 항목만 보강
+export const menuDatabase: MenuItem[] = baseMenuDatabase.map(
+  (menu) => detailedMenuMap.get(menu.name) ?? menu
+);
 
 // Default meta generator for menus without meta
 export function getDefaultMeta(item: MenuItem): MenuMeta {
