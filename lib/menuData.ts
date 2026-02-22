@@ -96,8 +96,8 @@ function convertToLegacyFormat(newMenu: NewMenuItem): MenuItem {
   };
 }
 
-// 기존 코드 호환성을 위해 export
-export const menuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
+// 기존 코드 호환성을 위한 기본 데이터 (아래에서 상세 메뉴와 병합 후 export)
+const baseMenuDatabase: MenuItem[] = newMenuDatabase.map(convertToLegacyFormat);
 
 // 이색 키워드도 export
 export { EXOTIC_KEYWORDS };
@@ -524,6 +524,14 @@ const detailedMenus: MenuItem[] = [
       '단백질 폭탄 반찬 5분 완성'
     ]
   },
+];
+
+const detailedMenuMap = new Map(detailedMenus.map((menu) => [menu.name, menu]));
+
+// 상세 메뉴는 기본 DB를 덮어쓰고, 기본 DB에 없는 상세 메뉴(예: 만들어먹기)는 추가
+export const menuDatabase: MenuItem[] = [
+  ...baseMenuDatabase.map((menu) => detailedMenuMap.get(menu.name) ?? menu),
+  ...detailedMenus.filter((menu) => !baseMenuDatabase.some((base) => base.name === menu.name)),
 ];
 
 // Default meta generator for menus without meta

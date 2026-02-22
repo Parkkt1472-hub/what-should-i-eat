@@ -6,6 +6,36 @@ type WhoType = '나 혼자' | '커플' | '가족' | '친구';
 type HowType = '만들어 먹기' | '배달' | '외식';
 type OutdoorType = '근처에서 찾기' | '기분전환 야외';
 
+
+const FIVE_MINUTE_HOME_MENU_NAMES = new Set([
+  '참치마요덮밥',
+  '김치계란덮밥',
+  '간장계란밥',
+  '버터간장밥',
+  '카레라이스(즉석카레)',
+  '고추장참치비빔밥',
+  '소세지야채볶음밥',
+  '베이컨김치볶음밥',
+  '라면계란볶이',
+  '비빔라면 + 계란후라이',
+  '참치라면',
+  '우동면 간장볶음',
+  '치즈토스트',
+  '햄치즈롤(식빵말이)',
+  '계란마요토스트',
+  '프렌치토스트',
+  '두부부침',
+  '김치두부',
+  '참치김치찌개',
+  '계란말이',
+]);
+
+function filterFiveMinuteHomeMenus(menus: MenuItem[]): MenuItem[] {
+  return menus.filter(
+    (menu) => menu.category === '만들어먹기' && FIVE_MINUTE_HOME_MENU_NAMES.has(menu.name)
+  );
+}
+
 // Decision modes
 export type DecisionMode = 'random' | 'personalized';
 
@@ -342,7 +372,7 @@ function makePersonalizedDecision(input: DecisionInput): DecisionResult {
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
   if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+    availableMenus = filterFiveMinuteHomeMenus(availableMenus);
   }
 
   if (excludeMenu) {
@@ -385,7 +415,7 @@ export function makeDecision(input: DecisionInput, opts?: DecisionOptions): Deci
 
   // 🍳 만들어 먹기 선택 시 만들어먹기 카테고리만 필터링
   if (how === '만들어 먹기') {
-    availableMenus = availableMenus.filter(menu => menu.category === '만들어먹기');
+    availableMenus = filterFiveMinuteHomeMenus(availableMenus);
   }
 
   // selectDiverseMenu 함수가 내부에서 excludeMenu와 최근 히스토리를 처리
