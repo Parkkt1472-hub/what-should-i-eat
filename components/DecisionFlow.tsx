@@ -7,27 +7,9 @@ interface DecisionFlowProps {
   onComplete: (data: any) => void;
 }
 
-type WhoType = '나 혼자' | '커플' | '가족' | '친구';
+type WhoType = '나 혼자' | '커플' | '가족' | '친구' | '직장동료';
 type HowType = '만들어 먹기' | '배달' | '외식';
 type OutdoorType = '근처에서 찾기' | '기분전환 야외';
-
-const whoIcons: Record<WhoType, string> = {
-  '나 혼자': '👤',
-  '커플': '💑',
-  '가족': '👨‍👩‍👧‍👦',
-  '친구': '👥',
-};
-
-const howIcons: Record<HowType, string> = {
-  '만들어 먹기': '👨‍🍳',
-  '배달': '🛵',
-  '외식': '🏪',
-};
-
-const outdoorIcons: Record<OutdoorType, string> = {
-  '근처에서 찾기': '📍',
-  '기분전환 야외': '🌿',
-};
 
 export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
   const [step, setStep] = useState<'who' | 'how' | 'outdoor'>('who');
@@ -68,122 +50,105 @@ export default function DecisionFlow({ onComplete }: DecisionFlowProps) {
     }, 300);
   };
 
+  const whoOptions: WhoType[] = ['나 혼자', '친구', '커플', '가족', '직장동료'];
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute top-40 right-20 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-20 w-32 h-32 bg-amber-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div className="relative flex min-h-screen w-full flex-col bg-[#f8f6f5] dark:bg-[#23140f] overflow-x-hidden">
+      {/* Header */}
+      <div className="flex items-center p-4 pb-2 justify-between">
+        <button 
+          onClick={() => window.history.back()}
+          className="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-start hover:bg-[#ff6933]/10 rounded-full transition-colors"
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12">
+          🎲 복불복 모드
+        </h2>
       </div>
 
-      <div className="w-full max-w-3xl relative z-10">
-        {/* Progress indicator */}
-        <div className="mb-12">
-          <div className="flex items-center justify-center gap-3">
-            <div className={`w-3 h-3 rounded-full transition-all duration-300 ${step === 'who' ? 'bg-orange-500 scale-125' : 'bg-orange-300'}`}></div>
-            <div className={`w-3 h-3 rounded-full transition-all duration-300 ${step === 'how' ? 'bg-orange-500 scale-125' : 'bg-orange-300'}`}></div>
-            <div className={`w-3 h-3 rounded-full transition-all duration-300 ${step === 'outdoor' ? 'bg-orange-500 scale-125' : 'bg-orange-300'}`}></div>
-          </div>
-        </div>
+      {/* Progress Indicator */}
+      <div className="flex w-full flex-row items-center justify-center gap-3 py-6">
+        <div className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${step === 'who' ? 'bg-[#ff6933]' : 'bg-[#ff6933]/30'}`}></div>
+        <div className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${step === 'how' ? 'bg-[#ff6933]' : 'bg-[#ff6933]/30'}`}></div>
+        <div className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${step === 'outdoor' ? 'bg-[#ff6933]' : 'bg-[#ff6933]/30'}`}></div>
+      </div>
 
+      <main className="max-w-md mx-auto w-full px-4 flex-1">
+        {/* Step 1: Who? */}
         {step === 'who' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
-                누가 먹나요?
-              </h2>
-              <p className="text-gray-600 text-lg">함께하는 사람에 맞춰 추천해드릴게요</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:gap-6">
-              {(['나 혼자', '커플', '가족', '친구'] as WhoType[]).map((option) => (
+          <section className="mb-8 animate-fade-in">
+            <h3 className="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-extrabold leading-tight text-center pb-6">
+              누구랑 드시나요?
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              {whoOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => handleWhoSelect(option)}
-                  className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl text-gray-800 text-xl md:text-2xl font-semibold py-10 md:py-12 px-6 rounded-3xl transform transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                  className="group flex min-w-[84px] cursor-pointer items-center justify-between rounded-xl h-14 px-6 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-2 border-transparent hover:border-[#ff6933] transition-all active:scale-95"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex flex-col items-center gap-3">
-                    <span className="text-5xl md:text-6xl">{whoIcons[option]}</span>
-                    <span>{option}</span>
-                  </div>
+                  <span className="text-base font-bold">{option}</span>
+                  <span className="material-symbols-outlined text-[#ff6933] opacity-0 group-hover:opacity-100 transition-opacity">
+                    check_circle
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Step 2: How? */}
         {step === 'how' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
-                어떻게 먹을까요?
-              </h2>
-              <p className="text-gray-600 text-lg">선택하신 방식에 맞춰 추천해드릴게요</p>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:gap-6">
+          <section className="mb-8 animate-fade-in">
+            <h3 className="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-extrabold leading-tight text-center pb-6">
+              어떻게 먹을까요?
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
               {(['만들어 먹기', '배달', '외식'] as HowType[]).map((option) => (
                 <button
                   key={option}
                   onClick={() => handleHowSelect(option)}
-                  className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl text-gray-800 text-xl md:text-2xl font-semibold py-10 md:py-12 px-8 rounded-3xl transform transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                  className="group flex min-w-[84px] cursor-pointer items-center justify-between rounded-xl h-14 px-6 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-2 border-transparent hover:border-[#ff6933] transition-all active:scale-95"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center justify-center gap-4">
-                    <span className="text-5xl">{howIcons[option]}</span>
-                    <span>{option}</span>
-                  </div>
+                  <span className="text-base font-bold">{option}</span>
+                  <span className="material-symbols-outlined text-[#ff6933] opacity-0 group-hover:opacity-100 transition-opacity">
+                    check_circle
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Step 3: Where? (Only for 외식) */}
         {step === 'outdoor' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
-                어디서 먹을까요?
-              </h2>
-              <p className="text-gray-600 text-lg">장소에 맞는 맛집을 찾아드릴게요</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <section className="mb-8 animate-fade-in">
+            <h3 className="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-extrabold leading-tight text-center pb-6">
+              어디서 먹을까요?
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
               {(['근처에서 찾기', '기분전환 야외'] as OutdoorType[]).map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOutdoorSelect(option)}
-                  className="group relative bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl text-gray-800 text-xl md:text-2xl font-semibold py-12 md:py-16 px-8 rounded-3xl transform transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                  className="group flex min-w-[84px] cursor-pointer items-center justify-between rounded-xl h-14 px-6 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-2 border-transparent hover:border-[#ff6933] transition-all active:scale-95"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex flex-col items-center justify-center gap-4">
-                    <span className="text-6xl">{outdoorIcons[option]}</span>
-                    <span>{option}</span>
-                  </div>
+                  <span className="text-base font-bold">{option}</span>
+                  <span className="material-symbols-outlined text-[#ff6933] opacity-0 group-hover:opacity-100 transition-opacity">
+                    check_circle
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
 
       <style jsx>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
         }
         .animate-fade-in {
           animation: fade-in 0.5s ease-out;

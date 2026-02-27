@@ -55,8 +55,11 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         
         {/* Theme Colors */}
-        <meta name="theme-color" content="#FF8C42" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#FF8C42" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ff6933" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#ff6933" media="(prefers-color-scheme: dark)" />
+        
+        {/* Material Symbols Icons */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
         
         {/* Links */}
         <link rel="manifest" href="/manifest.json" />
